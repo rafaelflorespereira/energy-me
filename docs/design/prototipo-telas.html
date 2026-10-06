@@ -1,0 +1,348 @@
+<title>Quem sou eu como energia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: duas telas de celular lado a lado (uma só no celular, com seletor de tela acima), dados compartilhados; notas de design abaixo. */
+:root{
+  --page:#E9EEEA; --page-ink:#1C2621; --page-muted:#5C6A62;
+  --surface:#FBFCFA; --card:#FFFFFF; --ink:#18211C; --muted:#67736C; --line:#E2E8E3; --soft:#F1F5F2;
+  --accent:#1F6F5C; --accent-ink:#FFFFFF; --frame:#1B2420;
+  --wood:#3E8E5A; --wood2:#7BA23F; --fire:#D04A3C; --earth:#C48716; --metal:#7E8B92; --water:#2E5C8C; --water2:#5E83AC;
+  --good:#2F8A55; --bad:#C2483A;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#0F1412; --page-ink:#E4ECE7; --page-muted:#93A39A;
+  --surface:#151B18; --card:#1C2420; --ink:#E7EEEA; --muted:#93A099; --line:#2A342F; --soft:#222B27;
+  --accent:#5CC4A6; --accent-ink:#0E1A16; --frame:#2A332F;
+  --wood:#5DBA7B; --wood2:#A3C861; --fire:#F0715F; --earth:#E8AE3A; --metal:#A7B3B9; --water:#6E9FD6; --water2:#9AB8DC;
+  --good:#5CC48A; --bad:#F0806F; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --page:#0F1412; --page-ink:#E4ECE7; --page-muted:#93A39A;
+  --surface:#151B18; --card:#1C2420; --ink:#E7EEEA; --muted:#93A099; --line:#2A342F; --soft:#222B27;
+  --accent:#5CC4A6; --accent-ink:#0E1A16; --frame:#2A332F;
+  --wood:#5DBA7B; --wood2:#A3C861; --fire:#F0715F; --earth:#E8AE3A; --metal:#A7B3B9; --water:#6E9FD6; --water2:#9AB8DC;
+  --good:#5CC48A; --bad:#F0806F; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--page-ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.stage{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:32px 48px;display:flex;flex-direction:column;gap:24px}
+.intro h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,4vw,36px);line-height:1.1;margin:0 0 6px;text-wrap:balance;letter-spacing:-.01em}
+.intro p{margin:0;color:var(--page-muted);max-width:62ch}
+.switch{display:none;align-self:center;background:color-mix(in srgb,var(--page-ink) 8%,transparent);border-radius:12px;padding:4px}
+.switch button{appearance:none;border:0;background:none;font:inherit;font-weight:700;font-size:14px;color:var(--page-muted);padding:8px 16px;border-radius:9px;cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--surface);color:var(--page-ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.phones{display:flex;gap:40px;justify-content:center;flex-wrap:wrap}
+.phone-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.phone-cap{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--page-muted);font-weight:600}
+.phone{width:360px;max-width:100%;height:760px;border-radius:44px;background:var(--frame);padding:10px;box-shadow:0 30px 60px -30px rgba(10,30,20,.45)}
+.screen{position:relative;height:100%;border-radius:35px;background:var(--surface);color:var(--ink);overflow:hidden;display:flex;flex-direction:column}
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:12px 26px 4px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.sbar .notch{width:90px;height:24px;border-radius:14px;background:var(--frame)}
+.view{flex:1;overflow-y:auto;padding:8px 16px 16px;display:flex;flex-direction:column;gap:12px;scrollbar-width:none}
+.view::-webkit-scrollbar{display:none}
+.tabbar{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line);background:var(--surface);padding:6px 10px 16px}
+.tab{appearance:none;border:0;background:none;font:inherit;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;padding:6px;border-radius:12px;cursor:pointer}
+.tab svg{width:22px;height:22px}
+.tab[aria-selected="true"]{color:var(--accent)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.hd{display:flex;flex-direction:column;gap:2px;padding-top:6px}
+.hd small{color:var(--muted);font-size:13px}
+.hd h2{font-family:var(--f-display);font-weight:700;font-size:25px;line-height:1.1;margin:0;letter-spacing:-.01em}
+
+/* Check-in: toque no nível */
+.rows{display:flex;flex-direction:column;gap:6px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:9px 10px 9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;transition:border-color .2s,background .2s}
+.row.on{border-color:color-mix(in srgb,var(--c) 55%,var(--line));background:color-mix(in srgb,var(--c) 7%,var(--card))}
+.row-name{font-weight:700;font-size:15.5px;line-height:1.2}
+.row-meta{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
+.row.on .row-meta{color:var(--c);font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.lv{display:flex;align-items:center;gap:2px}
+.lv button{appearance:none;border:0;background:none;padding:0;width:36px;height:40px;display:grid;place-items:center;cursor:pointer;border-radius:10px}
+.lv i{display:block;border-radius:50%;border:2px solid color-mix(in srgb,var(--c) 45%,var(--line));transition:background .15s,transform .15s}
+.lv button:nth-child(1) i{width:13px;height:13px}
+.lv button:nth-child(2) i{width:18px;height:18px}
+.lv button:nth-child(3) i{width:23px;height:23px}
+.lv button:nth-child(4) i{width:28px;height:28px}
+.lv button.fill i{background:var(--c);border-color:var(--c)}
+.lv button:active i{transform:scale(.88)}
+.scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);padding:0 4px}
+.cta{appearance:none;border:0;width:100%;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:700;font-size:16px;padding:15px;border-radius:16px;cursor:pointer;margin-top:2px}
+.cta:disabled{opacity:.45;cursor:default}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin:-4px 0 0}
+
+/* Resumo */
+.period{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:14px;padding:4px}
+.period button{appearance:none;border:0;background:none;font:inherit;font-size:14px;font-weight:700;color:var(--muted);padding:9px;border-radius:11px;cursor:pointer}
+.period button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h3{margin:0;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.analysis{background:color-mix(in srgb,var(--accent) 9%,var(--card));border-color:color-mix(in srgb,var(--accent) 25%,var(--line))}
+.verdict{font-family:var(--f-display);font-weight:700;font-size:21px;line-height:1.15;margin:0;text-wrap:balance}
+.verdict-sub{margin:-4px 0 0;font-size:13px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:6px}
+.kpi{background:var(--card);border-radius:12px;padding:8px 9px;display:flex;flex-direction:column;gap:1px;min-width:0}
+.kpi span{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.kpi b{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.insights{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.insights li{display:grid;grid-template-columns:22px 1fr;gap:6px;font-size:13.5px;line-height:1.35}
+.ar{font-weight:800;text-align:center}
+.ar.good{color:var(--good)} .ar.bad{color:var(--bad)} .ar.neu{color:var(--muted)}
+.mtc{font-size:12.5px;color:var(--muted);border-top:1px solid color-mix(in srgb,var(--accent) 20%,var(--line));padding-top:9px;margin:0;line-height:1.4}
+.bars{display:flex;flex-direction:column;gap:9px}
+.bar{display:grid;grid-template-columns:98px 1fr 30px;align-items:center;gap:8px;font-size:13px}
+.bar-name{font-weight:600}
+.track{position:relative;height:10px;background:var(--soft);border-radius:6px}
+.track .f{position:absolute;inset:0 auto 0 0;border-radius:6px;background:var(--c)}
+.track .prev{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55;border-radius:1px}
+.bar-v{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12.5px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.lg-prev{width:2px;height:12px;background:var(--ink);opacity:.55}
+.lg-now{width:14px;height:8px;border-radius:4px;background:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{appearance:none;flex:none;border:1px solid var(--line);background:none;font:inherit;font-size:12.5px;font-weight:600;color:var(--ink);padding:5px 10px;border-radius:999px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+svg text{font-family:var(--f-body)}
+.sample{font-size:11px;color:var(--muted);text-align:center}
+.toast{position:absolute;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--surface);font-size:13px;font-weight:600;padding:9px 14px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.pulse{animation:pulse .9s ease}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 50%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+
+/* Notas */
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;border-top:1px solid color-mix(in srgb,var(--page-ink) 15%,transparent);padding-top:22px}
+.notes h4{font-family:var(--f-display);font-size:17px;margin:0 0 4px;font-weight:700}
+.notes p{margin:0;color:var(--page-muted);font-size:14px}
+.el-key{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--page-muted);margin-top:8px}
+.el-key span{display:flex;align-items:center;gap:6px}
+
+@media (max-width:820px){ #phoneB{display:none} .phone-cap{display:none} .switch{display:inline-flex} }
+@media (max-width:400px){ .phone{height:720px;border-radius:38px;padding:8px} .screen{border-radius:31px} .lv button{width:32px} }
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+
+<div class="stage">
+  <header class="intro">
+    <h1>Quem sou eu como energia</h1>
+    <p>Protótipo das duas telas. Toque no nível de cada sentimento que você sente agora e depois em “Registrar”: o resumo é atualizado com o novo registro. O histórico usa dados de exemplo.</p>
+  </header>
+
+  <div class="switch" role="group" aria-label="Escolher tela">
+    <button data-switch="checkin" aria-pressed="true">Tela 1 · Check-in</button>
+    <button data-switch="resumo" aria-pressed="false">Tela 2 · Resumo</button>
+  </div>
+
+  <div class="phones">
+    <div class="phone-wrap" id="phoneA"><div class="phone-cap">Tela 1 · Check-in</div><div class="phone"><div class="screen"></div></div></div>
+    <div class="phone-wrap" id="phoneB"><div class="phone-cap">Tela 2 · Resumo</div><div class="phone"><div class="screen"></div></div></div>
+  </div>
+
+  <section class="notes">
+    <div>
+      <h4>Só toca no que sente</h4>
+      <p>Sem controles para arrastar. Cada sentimento tem quatro círculos que crescem com a intensidade (leve, moderada, forte, intensa). O que não for tocado conta como “não sinto”, então um check-in comum leva dois ou três toques e o botão de registrar.</p>
+    </div>
+    <div>
+      <h4>A análise vem primeiro</h4>
+      <p>O resumo abre com a escolha entre semana e mês. Logo abaixo vem a análise do período: se foi mais leve ou mais pesado que o anterior, o que melhorou, o que piorou e o sentimento predominante. Os gráficos ficam depois, como detalhe.</p>
+    </div>
+    <div>
+      <h4>Cores dos Cinco Elementos</h4>
+      <p>Cada sentimento usa a cor do seu elemento e o órgão associado na MTC.</p>
+      <div class="el-key">
+        <span><i class="dot" style="--c:var(--wood)"></i>Madeira</span>
+        <span><i class="dot" style="--c:var(--fire)"></i>Fogo</span>
+        <span><i class="dot" style="--c:var(--earth)"></i>Terra</span>
+        <span><i class="dot" style="--c:var(--metal)"></i>Metal</span>
+        <span><i class="dot" style="--c:var(--water)"></i>Água</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const F=[
+  {id:'raiva',n:'Raiva',org:'Fígado',el:'Madeira',c:'--wood',up:false},
+  {id:'frustracao',n:'Frustração',org:'Fígado',el:'Madeira',c:'--wood2',up:false},
+  {id:'preocupacao',n:'Preocupação',org:'Baço',el:'Terra',c:'--earth',up:false},
+  {id:'alegria',n:'Alegria',org:'Coração',el:'Fogo',c:'--fire',up:true},
+  {id:'tristeza',n:'Tristeza',org:'Pulmão',el:'Metal',c:'--metal',up:false},
+  {id:'culpa',n:'Culpa',org:'Rim',el:'Água',c:'--water2',up:false},
+  {id:'medo',n:'Medo',org:'Rim',el:'Água',c:'--water',up:false}
+];
+const LV=['não sinto','leve','moderada','forte','intensa'];
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const DIAS=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const ART={'Fígado':'o','Baço':'o','Coração':'o','Pulmão':'o','Rim':'o'};
+
+// Histórico de exemplo (escala 0–4): 60 dias anteriores a hoje, alguns dias sem check-in
+let seed=11; const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
+const TREND={raiva:[1.6,1.2],frustracao:[2.4,1.5],preocupacao:[3.1,1.7],alegria:[1.4,2.8],tristeza:[2,1.3],culpa:[1.5,1],medo:[1.1,1.3]};
+const today=new Date(); today.setHours(12,0,0,0);
+const data=[];
+for(let i=60;i>=0;i--){
+  const d=new Date(today); d.setDate(d.getDate()-i); const t=(60-i)/60;
+  let v=null;
+  if(i>0 && rnd()>.14){v={};for(const f of F){const [a,b]=TREND[f.id];v[f.id]=Math.max(0,Math.min(4,Math.round(a+(b-a)*t+(rnd()-.5)*2.2)));}}
+  data.push({d,v});
+}
+const draft=Object.fromEntries(F.map(f=>[f.id,0]));
+const ui={A:{tab:'checkin',period:'semana',sel:null},B:{tab:'resumo',period:'semana',sel:null}};
+
+const fmt=d=>`${d.getDate()} ${MESES[d.getMonth()]}`;
+const col=f=>`var(${f.c})`;
+const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:0;
+const dec=x=>x.toFixed(1).replace('.',',');
+const pct=x=>Math.round(Math.abs(x)*100)+'%';
+
+const ICON={
+  checkin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="11" cy="12" r="2.6"/><circle cx="18.5" cy="12" r="3.6"/></svg>',
+  resumo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M7 15l4-4 3 2 5-6"/></svg>'
+};
+
+function shell(key,inner){
+  const s=ui[key];
+  return `<div class="sbar"><span>9:41</span><span class="notch"></span><span>100%</span></div>
+  <div class="view">${inner}</div>
+  <nav class="tabbar" role="tablist">
+    <button class="tab" role="tab" aria-selected="${s.tab==='checkin'}" data-go="checkin">${ICON.checkin}Check-in</button>
+    <button class="tab" role="tab" aria-selected="${s.tab==='resumo'}" data-go="resumo">${ICON.resumo}Resumo</button>
+  </nav><div class="toast"></div>`;
+}
+
+function checkinView(){
+  const marked=F.filter(f=>draft[f.id]>0).length;
+  return `<div class="hd"><small>${DIAS[today.getDay()]}, ${today.getDate()} de ${MESES[today.getMonth()]}</small><h2>O que você sente agora?</h2></div>
+  <div class="scale"><span>Toque na intensidade</span><span>leve → intensa</span></div>
+  <div class="rows">${F.map(f=>{const v=draft[f.id];return `
+    <div class="row${v?' on':''}" style="--c:${col(f)}">
+      <div><div class="row-name">${f.n}</div><div class="row-meta">${v?LV[v]:`<i class="dot"></i>${f.org} · ${f.el}`}</div></div>
+      <div class="lv" role="group" aria-label="Intensidade de ${f.n}">${[1,2,3,4].map(l=>`<button data-f="${f.id}" data-l="${l}" class="${l<=v?'fill':''}" aria-label="${f.n}: ${LV[l]}" aria-pressed="${l===v}"><i></i></button>`).join('')}</div>
+    </div>`}).join('')}</div>
+  <button class="cta" data-save ${marked?'':'disabled'}>${marked?`Registrar (${marked} ${marked>1?'sentimentos':'sentimento'})`:'Toque em pelo menos um sentimento'}</button>
+  <p class="hint">Tocar de novo no mesmo nível desmarca</p>`;
+}
+
+function periodStats(N,offset){
+  const rows=data.slice(data.length-N-offset,data.length-offset).filter(r=>r.v);
+  const a={}; for(const f of F) a[f.id]=avg(rows.map(r=>r.v[f.id]));
+  const load=avg(F.filter(f=>!f.up).map(f=>a[f.id]));
+  return {a,load,count:rows.length};
+}
+
+function analysis(s){
+  const N=s.period==='semana'?7:30, nome=s.period==='semana'?'semana':'mês';
+  const cur=periodStats(N,0), prev=periodStats(N,N);
+  const start=data[data.length-N].d;
+  const ch=(cur.load-prev.load)/(prev.load||1);
+  const verdict=ch<-.05?`${s.period==='semana'?'Semana':'Mês'} mais leve que ${s.period==='semana'?'a':'o'} anterior`:ch>.05?`${s.period==='semana'?'Semana':'Mês'} mais pesad${s.period==='semana'?'a':'o'} que ${s.period==='semana'?'a':'o'} anterior`:`${s.period==='semana'?'Semana':'Mês'} parecid${s.period==='semana'?'a':'o'} com ${s.period==='semana'?'a':'o'} anterior`;
+  const deltas=F.map(f=>{const d=cur.a[f.id]-prev.a[f.id];return {f,d,score:f.up?d:-d}});
+  const better=[...deltas].sort((x,y)=>y.score-x.score).filter(x=>x.score>.15).slice(0,2);
+  const worse=[...deltas].sort((x,y)=>x.score-y.score).filter(x=>x.score<-.15).slice(0,1);
+  const neg=F.filter(f=>!f.up).sort((x,y)=>cur.a[y.id]-cur.a[x.id]);
+  const top=neg[0];
+  const line=x=>{const rel=(cur.a[x.f.id]-prev.a[x.f.id])/(prev.a[x.f.id]||1);
+    return `<b>${x.f.n}</b> ${x.d>0?'subiu':'caiu'} ${pct(rel)} em relação ${s.period==='semana'?'à semana':'ao mês'} anterior`;};
+  let items=better.map(x=>`<li><span class="ar good">${x.d>0?'↑':'↓'}</span><span>${line(x)}</span></li>`).join('');
+  items+=worse.map(x=>`<li><span class="ar bad">${x.d>0?'↑':'↓'}</span><span>${line(x)}</span></li>`).join('');
+  if(!items) items=`<li><span class="ar neu">=</span><span>Nenhum sentimento mudou muito em relação ${s.period==='semana'?'à semana':'ao mês'} anterior</span></li>`;
+  return `<div class="card analysis" data-analysis>
+    <h3>Análise ${s.period==='semana'?'da semana':'do mês'} · ${fmt(start)} a ${fmt(today)}</h3>
+    <p class="verdict">${verdict}</p>
+    <p class="verdict-sub">A intensidade média dos sentimentos difíceis ${ch<0?'caiu':'subiu'} ${pct(ch)}.</p>
+    <div class="kpis">
+      <div class="kpi"><span>Check-ins</span><b>${cur.count} de ${N}</b></div>
+      <div class="kpi"><span>Mais presente</span><b style="color:${col(top)}">${top.n}</b></div>
+      <div class="kpi"><span>Alegria</span><b>${LV[Math.round(cur.a.alegria)]}</b></div>
+    </div>
+    <ul class="insights">${items}</ul>
+    <p class="mtc">Na MTC, ${top.n.toLowerCase()} se relaciona ${ART[top.org]==='o'?'ao':'à'} ${top.org} (${top.el}). É o ponto para observar ${s.period==='semana'?'nesta semana':'neste mês'}.</p>
+  </div>`;
+}
+
+function barsCard(s){
+  const N=s.period==='semana'?7:30, cur=periodStats(N,0), prev=periodStats(N,N);
+  return `<div class="card">
+    <h3>Intensidade média</h3>
+    <div class="bars">${F.map(f=>`<div class="bar" style="--c:${col(f)}"><span class="bar-name">${f.n}</span>
+      <div class="track"><div class="f" style="width:${cur.a[f.id]/4*100}%"></div><div class="prev" style="left:calc(${prev.a[f.id]/4*100}% - 1px)"></div></div>
+      <span class="bar-v">${dec(cur.a[f.id])}</span></div>`).join('')}</div>
+    <div class="legend"><span><i class="lg-now"></i>Este período</span><span><i class="lg-prev"></i>Período anterior</span></div>
+  </div>`;
+}
+
+function lineCard(s){
+  const N=s.period==='semana'?7:30, rows=data.slice(-N);
+  const sel=s.sel||F.filter(f=>!f.up).sort((x,y)=>periodStats(N,0).a[y.id]-periodStats(N,0).a[x.id])[0].id;
+  const f=F.find(x=>x.id===sel);
+  const W=300,H=140,L=58,Rr=10,T=10,B=22, iw=W-L-Rr, ih=H-T-B;
+  const x=i=>L+i*iw/(N-1), y=v=>T+ih-v*ih/4;
+  let g='';
+  [1,2,3,4].forEach(v=>g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-8}" y="${y(v)+3.5}" text-anchor="end" font-size="10" fill="var(--muted)">${LV[v]}</text>`);
+  g+=`<line x1="${L}" x2="${W-Rr}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  const lab=N===7?rows.map((r,i)=>[i,DIAS[r.d.getDay()].slice(0,3)]):[[0,fmt(rows[0].d)],[Math.floor(N/2),fmt(rows[Math.floor(N/2)].d)],[N-1,'hoje']];
+  lab.forEach(([i,t],k)=>g+=`<text x="${x(i)}" y="${H-6}" text-anchor="${N===7?'middle':['start','middle','end'][k]}" font-size="10" fill="var(--muted)">${N===7&&i===N-1?'hoje':t}</text>`);
+  const pts=rows.map((r,i)=>r.v?[x(i),y(r.v[f.id])]:null).filter(Boolean);
+  if(pts.length){
+    const line=pts.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ');
+    g+=`<polygon points="${pts[0][0]},${y(0)} ${line} ${pts[pts.length-1][0]},${y(0)}" fill="${col(f)}" fill-opacity=".12"/>`;
+    g+=`<polyline points="${line}" fill="none" stroke="${col(f)}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    pts.forEach((p,i)=>g+=`<circle cx="${p[0]}" cy="${p[1]}" r="${i===pts.length-1?4.5:N===7?3.2:2}" fill="${i===pts.length-1?'var(--card)':col(f)}" ${i===pts.length-1?`stroke="${col(f)}" stroke-width="2.5"`:''}/>`);
+  }
+  return `<div class="card">
+    <h3>Evolução no período</h3>
+    <div class="chips">${F.map(o=>`<button class="chip" style="--c:${col(o)}" data-sel="${o.id}" aria-pressed="${o.id===sel}"><i class="dot"></i>${o.n}</button>`).join('')}</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Evolução de ${f.n} ${N===7?'na semana':'no mês'}">${g}</svg>
+  </div>`;
+}
+
+function resumoView(key){
+  const s=ui[key];
+  return `<div class="hd"><small>Hoje, ${today.getDate()} de ${MESES[today.getMonth()]}</small><h2>Seu resumo</h2></div>
+  <div class="period" role="group" aria-label="Período">
+    <button data-period="semana" aria-pressed="${s.period==='semana'}">Semana</button>
+    <button data-period="mes" aria-pressed="${s.period==='mes'}">Mês</button>
+  </div>
+  ${analysis(s)}${barsCard(s)}${lineCard(s)}
+  <p class="sample">Histórico com dados de exemplo</p>`;
+}
+
+const screens={A:document.querySelector('#phoneA .screen'),B:document.querySelector('#phoneB .screen')};
+const switchBtns=[...document.querySelectorAll('[data-switch]')];
+function render(key){
+  const s=ui[key], el=screens[key];
+  const scroll=el.querySelector('.view')?.scrollTop||0, same=el.dataset.cur===s.tab;
+  el.innerHTML=shell(key,s.tab==='checkin'?checkinView():resumoView(key));
+  el.dataset.cur=s.tab;
+  if(same) el.querySelector('.view').scrollTop=scroll;
+  if(key==='A') switchBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.switch===s.tab));
+}
+function toast(key,msg){const t=screens[key].querySelector('.toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1800);}
+const wide=()=>getComputedStyle(document.getElementById('phoneB')).display!=='none';
+
+switchBtns.forEach(b=>b.addEventListener('click',()=>{ui.A.tab=b.dataset.switch;render('A');}));
+
+for(const key of ['A','B']){
+  const el=screens[key];
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return; const s=ui[key]; const other=key==='A'?'B':'A';
+    if(b.dataset.go){s.tab=b.dataset.go;render(key);}
+    else if(b.dataset.l){const id=b.dataset.f,l=+b.dataset.l;draft[id]=draft[id]===l?0:l;render(key);if(ui[other].tab==='checkin')render(other);}
+    else if(b.dataset.period){s.period=b.dataset.period==='mes'?'mes':'semana';render(key);}
+    else if(b.dataset.sel){s.sel=b.dataset.sel;render(key);}
+    else if('save' in b.dataset){
+      data[data.length-1].v={...draft};
+      for(const f of F) draft[f.id]=0;
+      if(wide()&&ui[other].tab==='resumo'){render(key);render(other);screens[other].querySelector('[data-analysis]').classList.add('pulse');toast(key,'Check-in registrado');}
+      else{s.tab='resumo';render(key);toast(key,'Check-in registrado');render(other);}
+    }
+  });
+  render(key);
+}
+</script>

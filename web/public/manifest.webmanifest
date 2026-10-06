@@ -1,0 +1,10 @@
+{
+  "name": "Quem sou eu como energia",
+  "short_name": "Energia",
+  "lang": "pt-BR",
+  "display": "standalone",
+  "start_url": "/",
+  "background_color": "#FBFCFA",
+  "theme_color": "#1F6F5C",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
