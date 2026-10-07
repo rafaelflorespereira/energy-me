@@ -1,19 +1,22 @@
-import { parseCheckIns, type CheckIn } from './domain/checkins'
+import { parseCheckIns, type CheckIn } from "./domain/checkins";
 
-const KEY = 'energy-me:checkins:v1'
+const KEY = "energy-me:checkins:v1";
 
-export function loadCheckIns(): CheckIn[] {
+export function loadCheckIns(userId: string): CheckIn[] {
   try {
-    const raw = localStorage.getItem(KEY)
-    return raw ? parseCheckIns(JSON.parse(raw)) : []
+    const raw = localStorage.getItem(`${KEY}:${encodeURIComponent(userId)}`);
+    return raw ? parseCheckIns(JSON.parse(raw)) : [];
   } catch {
-    return []
+    return [];
   }
 }
 
-export function saveCheckIns(list: readonly CheckIn[]): void {
+export function saveCheckIns(userId: string, list: readonly CheckIn[]): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(list))
+    localStorage.setItem(
+      `${KEY}:${encodeURIComponent(userId)}`,
+      JSON.stringify(list),
+    );
   } catch {
     // Armazenamento cheio ou bloqueado: o app segue funcionando só na sessão.
   }

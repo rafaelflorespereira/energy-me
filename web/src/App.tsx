@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { upsertCheckIn, type CheckIn } from "./domain/checkins";
 import { toDateKey } from "./domain/dates";
 import { type Values } from "./domain/feelings";
@@ -38,16 +38,27 @@ const SummaryIcon = () => (
   </svg>
 );
 
-export function App() {
-  const [checkins, setCheckins] = useState<CheckIn[]>(loadCheckIns);
+export function App({
+  userId,
+  accountHeader,
+}: {
+  userId: string;
+  accountHeader: ReactNode;
+}) {
+  const [checkins, setCheckins] = useState<CheckIn[]>(() =>
+    loadCheckIns(userId),
+  );
   const [tab, setTab] = useState<Tab>("checkin");
   const [toast, setToast] = useState(false);
   const today = useMemo(() => toDateKey(new Date()), []);
 
-  const commit = useCallback((next: CheckIn[]) => {
-    setCheckins(next);
-    saveCheckIns(next);
-  }, []);
+  const commit = useCallback(
+    (next: CheckIn[]) => {
+      setCheckins(next);
+      saveCheckIns(userId, next);
+    },
+    [userId],
+  );
 
   const todays = checkins.find((c) => c.date === today)?.values ?? null;
 
@@ -60,6 +71,7 @@ export function App() {
 
   return (
     <div className="app">
+      {accountHeader}
       <main className={`view view-${tab === "resumo" ? "summary" : "checkin"}`}>
         {tab === "checkin" ? (
           <CheckInScreen

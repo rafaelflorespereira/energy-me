@@ -11,6 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "lucide-react": "^1.52.0",
+    "oidc-client-ts": "^3.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
