@@ -2,7 +2,15 @@
 
 ## Next release: sentiment-driven overview backgrounds
 
-Status: proposed; design exploration before implementation. Applies to the overview / summary screen only.
+Status: first version implemented (see "Decisions taken" below). Applies to the overview / summary screen only.
+
+### Decisions taken (v1)
+
+1. **Scene driver:** today's saved check-in. The scene is the feeling with the highest intensity today; ties follow the app's feeling order (`FEELINGS`). No check-in today, or every feeling at zero, keeps the neutral background. Period averages are never used, so the scenery never stands in for the week or the month. The summary shows what drives it ("Hoje: Raiva, intensa").
+2. **Intensity source:** today's value of that feeling (1–4).
+3. **Intensity treatment:** one scene per feeling (7 in total). Each scene is drawn at intensity 4; lower intensities lower color saturation and brightness and slow the animation (`intensityTreatment` in `web/src/ui/scenery.ts`).
+4. **Media and controls:** a static WebP image plus an optional muted 4-second loop (WebM VP9, MP4 H.264 fallback), in portrait (mobile) and landscape (desktop, ≥760 px) crops. Animation is on by default; reduced motion or data saving shows the image only. A bar under the period switch has a pause toggle and a scenery toggle (off = neutral overview), stored per device under `energy-me:scenery:v1`, separate from check-ins.
+5. **Assets:** generated procedurally by [`tools/scenery/scenery.py`](../tools/scenery/README.md) and served from `web/public/scenery/`. No third-party imagery and no external service sees the user's feelings. Scenes follow the Five Elements: alegria (Fire) sunny meadow with butterflies, tristeza (Metal) rainy lake with a weeping willow, raiva (Wood) wind and a burning horizon under a storm, frustração (Wood) a closed farm gate at the end of the road, preocupação (Earth) a path vanishing into ochre fog, culpa (Water) carrying a burden uphill in the snow, medo (Water) a vast dark sea at night.
 
 ### Goal
 
