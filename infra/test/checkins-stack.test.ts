@@ -96,6 +96,43 @@ describe("check-in infrastructure", () => {
     template.resourceCountIs("AWS::CloudWatch::Alarm", 2);
   });
 
+  it("emails alarms and an account budget to the configured address", () => {
+    template.hasResourceProperties("AWS::SNS::Subscription", {
+      Protocol: "email",
+      Endpoint: { Ref: "AlarmEmail" },
+    });
+    const [topic] = Object.keys(template.findResources("AWS::SNS::Topic"));
+    for (const alarm of Object.values(
+      template.findResources("AWS::CloudWatch::Alarm"),
+    )) {
+      expect(alarm.Properties.AlarmActions).toEqual([{ Ref: topic }]);
+    }
+    template.hasResourceProperties("AWS::Budgets::Budget", {
+      Budget: {
+        BudgetType: "COST",
+        TimeUnit: "MONTHLY",
+        BudgetLimit: { Amount: { Ref: "MonthlyBudgetUsd" }, Unit: "USD" },
+      },
+      NotificationsWithSubscribers: [
+        Match.objectLike({
+          Notification: Match.objectLike({
+            NotificationType: "ACTUAL",
+            Threshold: 80,
+          }),
+          Subscribers: [
+            { SubscriptionType: "EMAIL", Address: { Ref: "AlarmEmail" } },
+          ],
+        }),
+        Match.objectLike({
+          Notification: Match.objectLike({
+            NotificationType: "FORECASTED",
+            Threshold: 100,
+          }),
+        }),
+      ],
+    });
+  });
+
   it("grants only Query and UpdateItem on this table", () => {
     const statements = Object.values(
       template.findResources("AWS::IAM::Policy"),

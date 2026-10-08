@@ -41,6 +41,8 @@ Supply these explicitly for each target environment; they are public configurati
 | `CognitoUserPoolId`      | Existing pool ID in any region, such as `eu-central-1_EXAMPLE` or `us-east-1_EXAMPLE`                                       |
 | `CognitoClientId`        | Existing public app client ID; never its client secret                                                                      |
 | `WebOrigin`              | Exact origin without a trailing slash; for example `http://localhost:5173` in dev or `https://energy-me.vercel.app` in prod |
+| `AlarmEmail`             | Email for alarm and budget notifications; confirm the subscription link AWS sends after deploy                              |
+| `MonthlyBudgetUsd`       | Optional, default `5`; monthly account-wide cost budget, emailing at 80% actual and 100% forecast                           |
 
 The stack does not create, import into management, or modify Cognito resources. It configures the JWT authorizer to trust the supplied pool issuer and client. Use different clients/pools where appropriate so development cannot authorize production data access. Prefer separate AWS accounts; stage-specific names alone are not an account-level isolation boundary.
 
@@ -72,7 +74,8 @@ npm run synth -- --no-lookups -c stage=dev
 npm run diff -- --profile energy-me-dev -c stage=dev \
   --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
-  --parameters WebOrigin=http://localhost:5173
+  --parameters WebOrigin=http://localhost:5173 \
+  --parameters AlarmEmail=you@example.com
 ```
 
 ### 4. Deploy development
@@ -83,7 +86,8 @@ Deploy only after reviewing the diff and replacing the example values:
 npm run deploy -- --profile energy-me-dev -c stage=dev \
   --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
-  --parameters WebOrigin=http://localhost:5173
+  --parameters WebOrigin=http://localhost:5173 \
+  --parameters AlarmEmail=you@example.com
 ```
 
 The script requires approval for permission broadening, but that does not replace review of other changes such as resource replacements. Production uses the corresponding approved production profile and `-c stage=prod`, never a development role.
