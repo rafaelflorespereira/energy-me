@@ -10,6 +10,8 @@
     "deploy": "cdk deploy --require-approval broadening"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1147.0",
+    "@aws-sdk/lib-dynamodb": "^3.1147.0",
     "aws-cdk-lib": "^2.0.0",
     "constructs": "^10.0.0"
   },

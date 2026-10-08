@@ -11,8 +11,9 @@ interface Props {
   checkins: readonly CheckIn[]
   today: DateKey
   onGoCheckIn: () => void
-  onLoadSample: () => void
-  onClear: () => void
+  /** Ausentes quando os dados estão na nuvem: exemplo e apagar tudo são só locais. */
+  onLoadSample?: () => void
+  onClear?: () => void
 }
 
 export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onClear }: Props) {
@@ -48,9 +49,11 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
           <button className="cta" type="button" onClick={onGoCheckIn}>
             Fazer check-in
           </button>
-          <button className="link" type="button" onClick={onLoadSample}>
-            Ver com dados de exemplo
-          </button>
+          {onLoadSample ? (
+            <button className="link" type="button" onClick={onLoadSample}>
+              Ver com dados de exemplo
+            </button>
+          ) : null}
         </section>
       ) : (
         <>
@@ -127,6 +130,7 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
             />
           </section>
 
+          {onClear ? (
           <div className="footer">
             {confirmClear ? (
               <>
@@ -135,7 +139,7 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
                   className="link danger"
                   type="button"
                   onClick={() => {
-                    onClear()
+                    onClear?.()
                     setConfirmClear(false)
                   }}
                 >
@@ -151,6 +155,7 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
               </button>
             )}
           </div>
+          ) : null}
         </>
       )}
     </>

@@ -12,12 +12,16 @@ import {
   aws_apigatewayv2 as apigateway,
   aws_apigatewayv2_authorizers as authorizers,
   aws_apigatewayv2_integrations as integrations,
+  aws_budgets as budgets,
   aws_cloudwatch as cloudwatch,
+  aws_cloudwatch_actions as cloudwatchActions,
   aws_dynamodb as dynamodb,
   aws_iam as iam,
   aws_lambda as lambda,
   aws_lambda_nodejs as nodejs,
   aws_logs as logs,
+  aws_sns as sns,
+  aws_sns_subscriptions as subscriptions,
 } from "aws-cdk-lib";
 import type { Construct } from "constructs";
 
@@ -61,6 +65,20 @@ export class CheckInsStack extends Stack {
           : "^(https://[A-Za-z0-9.-]+(:[0-9]+)?|http://(localhost|127\\.0\\.0\\.1):[0-9]+)$",
       description:
         "Exact allowed web origin without a trailing slash; HTTPS required in production.",
+    });
+
+    const alarmEmail = new CfnParameter(this, "AlarmEmail", {
+      type: "String",
+      allowedPattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+      description:
+        "Email that receives alarm and budget notifications. AWS sends a confirmation link first.",
+    });
+    const monthlyBudget = new CfnParameter(this, "MonthlyBudgetUsd", {
+      type: "Number",
+      default: 5,
+      minValue: 1,
+      description:
+        "Monthly AWS cost budget in USD for the whole account; email at 80% actual and 100% forecast.",
     });
 
     const table = new dynamodb.Table(this, "CheckIns", {
@@ -165,15 +183,23 @@ export class CheckInsStack extends Stack {
       },
     });
 
-    new cloudwatch.Alarm(this, "FunctionErrors", {
+    const alerts = new sns.Topic(this, "Alerts", {
+      displayName: `energy-me ${stage} alerts`,
+      enforceSSL: true,
+    });
+    alerts.addSubscription(
+      new subscriptions.EmailSubscription(alarmEmail.valueAsString),
+    );
+    const notify = new cloudwatchActions.SnsAction(alerts);
+
+    const functionErrors = new cloudwatch.Alarm(this, "FunctionErrors", {
       metric: handler.metricErrors({ period: Duration.minutes(5) }),
       threshold: 1,
       evaluationPeriods: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      alarmDescription:
-        "Check-in Lambda invocation failures. Configure a notification action before production use.",
+      alarmDescription: "Check-in Lambda invocation failures.",
     });
-    new cloudwatch.Alarm(this, "ApiServerErrors", {
+    const apiServerErrors = new cloudwatch.Alarm(this, "ApiServerErrors", {
       metric: new cloudwatch.Metric({
         namespace: "AWS/ApiGateway",
         metricName: "5xx",
@@ -184,15 +210,42 @@ export class CheckInsStack extends Stack {
       threshold: 1,
       evaluationPeriods: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      alarmDescription:
-        "Check-in HTTP API server failures, including the scaffold's explicit 501 response.",
+      alarmDescription: "Check-in HTTP API server failures.",
+    });
+
+    for (const alarm of [functionErrors, apiServerErrors]) {
+      alarm.addAlarmAction(notify);
+    }
+
+    // Orçamento da conta inteira, não só deste stack: avisa antes de surpresas.
+    new budgets.CfnBudget(this, "MonthlyBudget", {
+      budget: {
+        budgetName: `energy-me-${stage}-monthly`,
+        budgetType: "COST",
+        timeUnit: "MONTHLY",
+        budgetLimit: { amount: monthlyBudget.valueAsNumber, unit: "USD" },
+      },
+      notificationsWithSubscribers: [
+        { type: "ACTUAL", threshold: 80 },
+        { type: "FORECASTED", threshold: 100 },
+      ].map(({ type, threshold }) => ({
+        notification: {
+          notificationType: type,
+          comparisonOperator: "GREATER_THAN",
+          threshold,
+          thresholdType: "PERCENTAGE",
+        },
+        subscribers: [
+          { subscriptionType: "EMAIL", address: alarmEmail.valueAsString },
+        ],
+      })),
     });
 
     new CfnOutput(this, "CheckInsApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "CheckInsTableName", { value: table.tableName });
     new CfnOutput(this, "PersistenceStatus", {
       value:
-        "Infrastructure scaffold only; handler returns 501 until implemented.",
+        "GET /checkins and PUT /checkins/{date} implemented; clear-all not yet.",
     });
   }
 }

@@ -11,7 +11,7 @@ TypeScript AWS CDK v2 scaffold for the architecture in [the persistence proposal
 - CloudWatch alarms for Lambda invocation errors and API 5xx responses. Notification actions are not configured yet; attach an approved notification destination before real production use.
 - Separate `dev` and `prod` stack/table names. Production stack termination protection is enabled by the CDK entry point. Both environments retain and protect their tables.
 
-**This is infrastructure only.** The Lambda requires access-token claims but deliberately returns `501 PERSISTENCE_NOT_IMPLEMENTED` for authenticated calls. No record is read or saved. DELETE is not exposed, and the role has no delete permission. The current web app still uses local storage. Do not connect or announce cloud saving until the handler and web repository are implemented and tested.
+**The API implements `GET /checkins` and `PUT /checkins/{date}`** per [the persistence contract](../docs/checkin-persistence.md): access token required, owner taken from the verified `sub`, seven English feeling keys with integer intensities 0 to 4, real calendar dates, and a date-only pagination cursor. Handler tests run against a stubbed DynamoDB client. DELETE (clear-all) is not exposed, and the role has no delete permission. The current web app still uses local storage until the web repository is wired to this API.
 
 English feeling keys (`anger`, `frustration`, `worry`, `joy`, `sadness`, `guilt`, `fear`) and the integer 0-4 validation belong to that next handler implementation, not the DynamoDB table key schema.
 
@@ -41,6 +41,8 @@ Supply these explicitly for each target environment; they are public configurati
 | `CognitoUserPoolId`      | Existing pool ID in any region, such as `eu-central-1_EXAMPLE` or `us-east-1_EXAMPLE`                                       |
 | `CognitoClientId`        | Existing public app client ID; never its client secret                                                                      |
 | `WebOrigin`              | Exact origin without a trailing slash; for example `http://localhost:5173` in dev or `https://energy-me.vercel.app` in prod |
+| `AlarmEmail`             | Email for alarm and budget notifications; confirm the subscription link AWS sends after deploy                              |
+| `MonthlyBudgetUsd`       | Optional, default `5`; monthly account-wide cost budget, emailing at 80% actual and 100% forecast                           |
 
 The stack does not create, import into management, or modify Cognito resources. It configures the JWT authorizer to trust the supplied pool issuer and client. Use different clients/pools where appropriate so development cannot authorize production data access. Prefer separate AWS accounts; stage-specific names alone are not an account-level isolation boundary.
 
@@ -72,7 +74,8 @@ npm run synth -- --no-lookups -c stage=dev
 npm run diff -- --profile energy-me-dev -c stage=dev \
   --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
-  --parameters WebOrigin=http://localhost:5173
+  --parameters WebOrigin=http://localhost:5173 \
+  --parameters AlarmEmail=you@example.com
 ```
 
 ### 4. Deploy development
@@ -83,12 +86,13 @@ Deploy only after reviewing the diff and replacing the example values:
 npm run deploy -- --profile energy-me-dev -c stage=dev \
   --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
-  --parameters WebOrigin=http://localhost:5173
+  --parameters WebOrigin=http://localhost:5173 \
+  --parameters AlarmEmail=you@example.com
 ```
 
 The script requires approval for permission broadening, but that does not replace review of other changes such as resource replacements. Production uses the corresponding approved production profile and `-c stage=prod`, never a development role.
 
-The output `CheckInsApiUrl` will eventually become the public `VITE_CHECKINS_API_URL` in Vercel. Do not wire it to the web app while `PersistenceStatus` still reports the placeholder. Vercel has no need for AWS credentials in this architecture.
+The output `CheckInsApiUrl` will eventually become the public `VITE_CHECKINS_API_URL` in Vercel. Vercel has no need for AWS credentials in this architecture.
 
 ## Safety before production
 

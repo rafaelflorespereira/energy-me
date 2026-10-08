@@ -1,6 +1,6 @@
 # Quem sou eu como energia · Web
 
-App web mobile first para registrar como a pessoa se sente (sentimentos da MTC) e acompanhar a evolução por semana e por mês. React + TypeScript + Vite, com Google SSO via Amazon Cognito. Sem backend de dados: os registros ficam no `localStorage` do aparelho, separados por conta.
+App web mobile first para registrar como a pessoa se sente (sentimentos da MTC) e acompanhar a evolução por semana e por mês. React + TypeScript + Vite, com Google SSO via Amazon Cognito. Os registros ficam no `localStorage` do aparelho, separados por conta. Com `VITE_CHECKINS_API_URL` configurada (o output `CheckInsApiUrl` do [`infra/`](../infra/README.md)), eles passam a ser lidos e salvos na API; nesse modo os dados de exemplo e o "Apagar histórico" ficam ocultos, e registros que já estavam no aparelho não são enviados automaticamente.
 
 ## Rodar
 
@@ -23,7 +23,7 @@ Em telas largas o app aparece em uma coluna de celular centralizada. O `manifest
 4. Registre `http://localhost:5173/auth/callback` nas **Allowed callback URLs** e `http://localhost:5173/` nas **Allowed sign-out URLs**. Os endereços precisam corresponder exatamente, incluindo porta e barra final. Adicione também as URLs HTTPS da implantação.
 5. Preencha `.env.local` a partir de `.env.example` e reinicie o Vite. `VITE_COGNITO_ISSUER` é a URL do User Pool (`https://cognito-idp.REGIAO.amazonaws.com/POOL_ID`), `VITE_COGNITO_CLIENT_ID` é o ID do app client, e `VITE_COGNITO_DOMAIN` é a origem HTTPS do managed login, sem `/login` ou outro caminho.
 
-As variáveis opcionais `VITE_COGNITO_REDIRECT_URI` e `VITE_COGNITO_LOGOUT_URI` devem usar a mesma origem do app. Se omitidas, são calculadas a partir da origem atual, com `/auth/callback` e `/`. Ao usar outra porta local, registre os novos endereços no Cognito e atualize ou omita essas variáveis. Todas as variáveis `VITE_*` são públicas e incorporadas ao build; não inclua segredos.
+A variável opcional `VITE_CHECKINS_API_URL` liga o app à API de check-ins; sem ela, tudo continua local. As variáveis opcionais `VITE_COGNITO_REDIRECT_URI` e `VITE_COGNITO_LOGOUT_URI` devem usar a mesma origem do app. Se omitidas, são calculadas a partir da origem atual, com `/auth/callback` e `/`. Ao usar outra porta local, registre os novos endereços no Cognito e atualize ou omita essas variáveis. Todas as variáveis `VITE_*` são públicas e incorporadas ao build; não inclua segredos.
 
 Na implantação, configure o servidor estático para devolver `index.html` em `/auth/callback` (fallback de SPA) e use HTTPS. Sem configuração, o app mostra o login indisponível e não libera os registros.
 

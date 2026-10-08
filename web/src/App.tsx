@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
-import { upsertCheckIn, type CheckIn } from "./domain/checkins";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { type CheckIn } from "./domain/checkins";
 import { toDateKey } from "./domain/dates";
 import { type Values } from "./domain/feelings";
 import { sampleCheckIns } from "./domain/sample";
-import { loadCheckIns, saveCheckIns } from "./storage";
+import { type CheckInRepository } from "./repository";
 import { CheckInScreen } from "./ui/CheckInScreen";
 import { SummaryScreen } from "./ui/SummaryScreen";
 
@@ -39,54 +39,116 @@ const SummaryIcon = () => (
 );
 
 export function App({
-  userId,
+  repository: createRepository,
   accountHeader,
 }: {
-  userId: string;
+  /** Criado uma vez por conta; o sinal cancela pedidos ao sair ou trocar de conta. */
+  repository: (signal: AbortSignal) => CheckInRepository;
   accountHeader: ReactNode;
 }) {
-  const [checkins, setCheckins] = useState<CheckIn[]>(() =>
-    loadCheckIns(userId),
+  const [checkins, setCheckins] = useState<CheckIn[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading",
   );
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [tab, setTab] = useState<Tab>("checkin");
   const [toast, setToast] = useState(false);
   const today = useMemo(() => toDateKey(new Date()), []);
+  const repo = useRef<CheckInRepository | null>(null);
+  const signal = useRef<AbortSignal | null>(null);
 
-  const commit = useCallback(
-    (next: CheckIn[]) => {
-      setCheckins(next);
-      saveCheckIns(userId, next);
-    },
-    [userId],
-  );
+  const load = useCallback(() => {
+    const r = repo.current;
+    const s = signal.current;
+    if (!r || !s) return;
+    setStatus("loading");
+    r.load().then(
+      (list) => {
+        if (s.aborted) return;
+        setCheckins(list);
+        setStatus("ready");
+      },
+      () => {
+        if (!s.aborted) setStatus("error");
+      },
+    );
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    repo.current = createRepository(controller.signal);
+    signal.current = controller.signal;
+    load();
+    return () => controller.abort();
+  }, [createRepository, load]);
+
+  const replaceAll = (list: CheckIn[]) => {
+    setCheckins(list);
+    repo.current?.replaceAll?.(list);
+  };
 
   const todays = checkins.find((c) => c.date === today)?.values ?? null;
 
-  const save = (values: Values) => {
-    commit(upsertCheckIn(checkins, { date: today, values }));
-    setTab("resumo");
-    setToast(true);
-    setTimeout(() => setToast(false), 1800);
+  const save = async (values: Values) => {
+    const r = repo.current;
+    const s = signal.current;
+    if (!r || !s || saving) return;
+    setSaving(true);
+    setSaveError(false);
+    try {
+      const next = await r.save(checkins, { date: today, values });
+      if (s.aborted) return;
+      setCheckins(next);
+      setTab("resumo");
+      setToast(true);
+      setTimeout(() => setToast(false), 1800);
+    } catch {
+      // O rascunho continua na tela para tentar de novo.
+      if (!s.aborted) setSaveError(true);
+    } finally {
+      if (!s.aborted) setSaving(false);
+    }
   };
+
+  const local = repo.current ? !repo.current.remote : false;
 
   return (
     <div className="app">
       {accountHeader}
       <main className={`view view-${tab === "resumo" ? "summary" : "checkin"}`}>
-        {tab === "checkin" ? (
+        {status === "loading" ? (
+          <section className="card empty" role="status" aria-busy="true">
+            <p>Carregando seus check-ins...</p>
+          </section>
+        ) : status === "error" ? (
+          <section className="card empty">
+            <h2>Não foi possível carregar</h2>
+            <p role="alert">
+              Seus check-ins não foram carregados. Verifique a conexão.
+            </p>
+            <button className="cta" type="button" onClick={load}>
+              Tentar de novo
+            </button>
+          </section>
+        ) : tab === "checkin" ? (
           <CheckInScreen
             key={todays ? "edit" : "new"}
             today={today}
             existing={todays}
             onSave={save}
+            saving={saving}
+            saveError={saveError}
           />
         ) : (
           <SummaryScreen
             checkins={checkins}
             today={today}
             onGoCheckIn={() => setTab("checkin")}
-            onLoadSample={() => commit(sampleCheckIns(today))}
-            onClear={() => commit([])}
+            onLoadSample={
+              local ? () => replaceAll(sampleCheckIns(today)) : undefined
+            }
+            onClear={local ? () => replaceAll([]) : undefined}
           />
         )}
       </main>

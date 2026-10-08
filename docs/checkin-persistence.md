@@ -1,6 +1,6 @@
 # Check-in persistence proposal
 
-Status: proposed persistence contract. A local [CDK infrastructure scaffold](../infra/README.md) now defines the table and authenticated API, but its Lambda explicitly returns 501. No AWS resources have been deployed, and actual read/write persistence and web synchronization are not implemented.
+Status: proposed persistence contract. A local [CDK infrastructure scaffold](../infra/README.md) now defines the table and authenticated API, and its Lambda implements `GET /checkins` and `PUT /checkins/{date}` (clear-all is not implemented yet). The web app reads and saves through the API when `VITE_CHECKINS_API_URL` is set and otherwise keeps using local storage; importing existing local records and clear-all are not implemented yet.
 
 ## Recommendation
 
