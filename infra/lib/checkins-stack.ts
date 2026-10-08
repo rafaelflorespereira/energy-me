@@ -184,15 +184,14 @@ export class CheckInsStack extends Stack {
       threshold: 1,
       evaluationPeriods: 1,
       treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      alarmDescription:
-        "Check-in HTTP API server failures, including the scaffold's explicit 501 response.",
+      alarmDescription: "Check-in HTTP API server failures.",
     });
 
     new CfnOutput(this, "CheckInsApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "CheckInsTableName", { value: table.tableName });
     new CfnOutput(this, "PersistenceStatus", {
       value:
-        "Infrastructure scaffold only; handler returns 501 until implemented.",
+        "GET /checkins and PUT /checkins/{date} implemented; clear-all not yet.",
     });
   }
 }
