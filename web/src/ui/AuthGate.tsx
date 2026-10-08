@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoaderCircle, LogOut } from "lucide-react";
 import type { User } from "oidc-client-ts";
 import { getAuthClient, type AuthClient } from "../auth";
 import { App } from "../App";
+import { createCheckInsApi } from "../checkinsApi";
+import {
+  localRepository,
+  remoteRepository,
+  type CheckInRepository,
+} from "../repository";
+
+const API_URL = import.meta.env.VITE_CHECKINS_API_URL?.trim() || "";
 
 export function AuthGate() {
   const [client, setClient] = useState<AuthClient | null>(null);
@@ -82,6 +90,35 @@ export function AuthGate() {
     }
   };
 
+  const userId = user?.profile.sub ?? "";
+  const repository = useCallback(
+    (signal: AbortSignal): CheckInRepository => {
+      if (!API_URL || !client) return localRepository(userId);
+      const manager = client.manager;
+      return remoteRepository(
+        createCheckInsApi({
+          baseUrl: API_URL,
+          signal,
+          getToken: async (renew) => {
+            try {
+              const current = renew
+                ? await manager.signinSilent()
+                : await manager.getUser();
+              if (!current || current.expired) return null;
+              // Garante que o token é da conta que abriu esta tela.
+              return current.profile.sub === userId
+                ? current.access_token
+                : null;
+            } catch {
+              return null;
+            }
+          },
+        }),
+      );
+    },
+    [client, userId],
+  );
+
   if (loading) {
     return (
       <main className="auth-screen" aria-busy="true">
@@ -135,7 +172,7 @@ export function AuthGate() {
   return (
     <App
       key={user.profile.sub}
-      userId={user.profile.sub}
+      repository={repository}
       accountHeader={
         <header className="account-bar">
           <span className="account-brand">Energy Me</span>

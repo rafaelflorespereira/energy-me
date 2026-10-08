@@ -11,9 +11,11 @@ interface Props {
   /** Check-in já registrado hoje, para poder ajustar. */
   existing: Values | null
   onSave: (values: Values) => void
+  saving?: boolean
+  saveError?: boolean
 }
 
-export function CheckInScreen({ today, existing, onSave }: Props) {
+export function CheckInScreen({ today, existing, onSave, saving = false, saveError = false }: Props) {
   const [values, setValues] = useState<Values>(() => existing ?? emptyValues())
   const marked = FEELINGS.filter((f) => values[f.id] > 0).length
 
@@ -52,11 +54,24 @@ export function CheckInScreen({ today, existing, onSave }: Props) {
           )
         })}
       </div>
-      <button className="cta" type="button" disabled={!hasAnyFeeling(values)} onClick={() => onSave(values)}>
-        {marked
-          ? `${existing ? 'Atualizar' : 'Registrar'} (${marked} ${marked > 1 ? 'sentimentos' : 'sentimento'})`
-          : 'Toque em pelo menos um sentimento'}
+      <button
+        className="cta"
+        type="button"
+        disabled={!hasAnyFeeling(values) || saving}
+        aria-busy={saving}
+        onClick={() => onSave(values)}
+      >
+        {saving
+          ? 'Salvando...'
+          : marked
+            ? `${existing ? 'Atualizar' : 'Registrar'} (${marked} ${marked > 1 ? 'sentimentos' : 'sentimento'})`
+            : 'Toque em pelo menos um sentimento'}
       </button>
+      {saveError ? (
+        <p className="save-error" role="alert">
+          Não foi possível salvar. Seus valores continuam aqui; tente de novo.
+        </p>
+      ) : null}
       <p className="hint">Tocar de novo no mesmo nível desmarca</p>
     </>
   )
