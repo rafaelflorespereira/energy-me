@@ -6,7 +6,7 @@ import { CheckInsStack, parseStage } from "../lib/checkins-stack";
 const template = Template.fromStack(
   new CheckInsStack(new App(), "TestStack", {
     stage: "prod",
-    env: { account: "111111111111", region: "us-east-1" },
+    env: { account: "111111111111", region: "eu-central-1" },
     terminationProtection: true,
   }),
 );
@@ -47,7 +47,22 @@ describe("check-in infrastructure", () => {
       IdentitySource: ["$request.header.Authorization"],
       JwtConfiguration: {
         Audience: [{ Ref: "CognitoClientId" }],
-        Issuer: Match.anyValue(),
+        Issuer: {
+          "Fn::Join": [
+            "",
+            [
+              "https://cognito-idp.",
+              {
+                "Fn::Select": [
+                  0,
+                  { "Fn::Split": ["_", { Ref: "CognitoUserPoolId" }] },
+                ],
+              },
+              ".amazonaws.com/",
+              { Ref: "CognitoUserPoolId" },
+            ],
+          ],
+        },
       },
     });
   });

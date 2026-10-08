@@ -1,6 +1,6 @@
 # Check-in infrastructure
 
-TypeScript AWS CDK v2 scaffold for the architecture in [the persistence proposal](../docs/checkin-persistence.md). Region: `us-east-1`.
+TypeScript AWS CDK v2 scaffold for the architecture in [the persistence proposal](../docs/checkin-persistence.md). Region: `eu-central-1` (Frankfurt). The Cognito user pool can stay in another region; the JWT issuer uses the region in the pool ID.
 
 ## Current scope
 
@@ -38,7 +38,7 @@ Supply these explicitly for each target environment; they are public configurati
 
 | CloudFormation parameter | Value                                                                                                                       |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `CognitoUserPoolId`      | Existing pool ID in `us-east-1`, such as `us-east-1_EXAMPLE`                                                                |
+| `CognitoUserPoolId`      | Existing pool ID in any region, such as `eu-central-1_EXAMPLE` or `us-east-1_EXAMPLE`                                       |
 | `CognitoClientId`        | Existing public app client ID; never its client secret                                                                      |
 | `WebOrigin`              | Exact origin without a trailing slash; for example `http://localhost:5173` in dev or `https://energy-me.vercel.app` in prod |
 
@@ -70,7 +70,7 @@ Review generated infrastructure against the target environment:
 ```bash
 npm run synth -- --no-lookups -c stage=dev
 npm run diff -- --profile energy-me-dev -c stage=dev \
-  --parameters CognitoUserPoolId=us-east-1_EXAMPLE \
+  --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
   --parameters WebOrigin=http://localhost:5173
 ```
@@ -81,7 +81,7 @@ Deploy only after reviewing the diff and replacing the example values:
 
 ```bash
 npm run deploy -- --profile energy-me-dev -c stage=dev \
-  --parameters CognitoUserPoolId=us-east-1_EXAMPLE \
+  --parameters CognitoUserPoolId=eu-central-1_EXAMPLE \
   --parameters CognitoClientId=PUBLIC_CLIENT_ID \
   --parameters WebOrigin=http://localhost:5173
 ```

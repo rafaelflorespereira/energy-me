@@ -8,7 +8,7 @@ new CheckInsStack(app, `EnergyMeCheckIns-${stage}`, {
   stage,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: "us-east-1",
+    region: "eu-central-1",
   },
   terminationProtection: stage === "prod",
 });

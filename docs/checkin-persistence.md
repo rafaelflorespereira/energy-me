@@ -4,7 +4,7 @@ Status: proposed persistence contract. A local [CDK infrastructure scaffold](../
 
 ## Recommendation
 
-Use the existing Cognito sign-in with an API Gateway HTTP API, one Lambda function, and one DynamoDB table in `us-east-1`. Keep the web app on Vercel. Save only check-ins; Cognito already owns user identity, and summaries can continue to be calculated in the browser.
+Use the existing Cognito sign-in with an API Gateway HTTP API, one Lambda function, and one DynamoDB table in `eu-central-1`. Keep the web app on Vercel. Save only check-ins; Cognito already owns user identity, and summaries can continue to be calculated in the browser.
 
 This is a good fit for the actual access pattern: one person's small records, read in date order, with one record per day. Use DynamoDB on-demand capacity initially. No users table, feelings table, secondary index, AppSync, Cognito Identity Pool, or background synchronization worker is needed.
 
