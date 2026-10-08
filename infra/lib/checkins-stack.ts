@@ -4,6 +4,7 @@ import {
   CfnOutput,
   CfnParameter,
   Duration,
+  Fn,
   RemovalPolicy,
   Stack,
   Tags,
@@ -41,9 +42,9 @@ export class CheckInsStack extends Stack {
 
     const poolId = new CfnParameter(this, "CognitoUserPoolId", {
       type: "String",
-      allowedPattern: "^us-east-1_[A-Za-z0-9]+$",
+      allowedPattern: "^[a-z]{2}(-[a-z]+)+-[0-9]_[A-Za-z0-9]+$",
       description:
-        "Existing Cognito user pool ID in us-east-1. This stack does not modify the pool.",
+        "Existing Cognito user pool ID, such as eu-central-1_EXAMPLE. The pool may be in another region. This stack does not modify the pool.",
     });
     const clientId = new CfnParameter(this, "CognitoClientId", {
       type: "String",
@@ -101,9 +102,11 @@ export class CheckInsStack extends Stack {
       }),
     );
 
+    // The pool ID starts with its own region, which can differ from the stack's.
+    const poolRegion = Fn.select(0, Fn.split("_", poolId.valueAsString));
     const authorizer = new authorizers.HttpJwtAuthorizer(
       "CognitoAuthorizer",
-      `https://cognito-idp.us-east-1.amazonaws.com/${poolId.valueAsString}`,
+      `https://cognito-idp.${poolRegion}.amazonaws.com/${poolId.valueAsString}`,
       { jwtAudience: [clientId.valueAsString] },
     );
     const api = new apigateway.HttpApi(this, "CheckInsApi", {
