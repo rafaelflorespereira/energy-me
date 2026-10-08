@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Energy Me | Check-in persistence proposal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --surface: #fbfcfa;
+        --card: #fff;
+        --ink: #18211c;
+        --muted: #67736c;
+        --line: #e2e8e3;
+        --soft: #f1f5f2;
+        --accent: #1f6f5c;
+        --water: #2e5c8c;
+        --fire: #d04a3c;
+        --f-display: "Bricolage Grotesque", "Avenir Next", sans-serif;
+        --f-body: "Figtree", "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --surface: #151b18;
+          --card: #1c2420;
+          --ink: #e7eeea;
+          --muted: #93a099;
+          --line: #2a342f;
+          --soft: #222b27;
+          --accent: #5cc4a6;
+          --water: #6e9fd6;
+          --fire: #f0715f;
+        }
+      }
+      * {
+        box-sizing: border-box;
+        min-width: 0;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--surface);
+        font: 16px/1.6 var(--f-body);
+      }
+      header {
+        border-top: 6px solid var(--accent);
+        border-bottom: 1px solid var(--line);
+      }
+      .inner {
+        max-width: 1040px;
+        margin: auto;
+        padding: 32px 24px;
+      }
+      .brand {
+        color: var(--accent);
+        font-weight: 700;
+        margin: 0 0 16px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--f-display);
+        letter-spacing: 0;
+        overflow-wrap: anywhere;
+      }
+      h1 {
+        font-size: 36px;
+        line-height: 1.15;
+        max-width: 660px;
+        margin: 0 0 16px;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.25;
+        margin: 0 0 16px;
+      }
+      h3 {
+        font-size: 18px;
+        line-height: 1.3;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 16px;
+        overflow-wrap: anywhere;
+      }
+      .lede {
+        max-width: 740px;
+        font-size: 18px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .status {
+        color: var(--water);
+        font-size: 14px;
+        margin: 0;
+      }
+      section {
+        border-bottom: 1px solid var(--line);
+      }
+      section:nth-child(even) {
+        background: var(--soft);
+      }
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+        margin: 28px 0 0;
+      }
+      .fact {
+        border-top: 2px solid var(--line);
+        padding-top: 12px;
+      }
+      .fact strong {
+        display: block;
+        font-family: var(--f-display);
+        font-size: 22px;
+      }
+      .fact span {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .mermaid {
+        max-width: 700px;
+        margin: 24px auto;
+      }
+      .mermaid svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+      }
+      .mermaid-pending {
+        font:
+          13px/1.5 ui-monospace,
+          monospace;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 32px;
+      }
+      pre {
+        font:
+          13px/1.65 ui-monospace,
+          monospace;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        padding: 20px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        margin: 0;
+      }
+      code {
+        font:
+          0.9em ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+        margin: 0;
+      }
+      li {
+        margin: 0 0 12px;
+        overflow-wrap: anywhere;
+      }
+      .key {
+        color: var(--accent);
+      }
+      .warning {
+        color: var(--fire);
+      }
+      .option {
+        border-top: 2px solid var(--line);
+        padding-top: 16px;
+      }
+      .option.recommended {
+        border-color: var(--accent);
+      }
+      .options {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+      }
+      .endpoint {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .endpoint strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--water);
+      }
+      footer {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      @media (max-width: 700px) {
+        .facts,
+        .options,
+        .grid {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+        h1 {
+          font-size: 30px;
+        }
+        .inner {
+          padding: 28px 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="inner">
+        <p class="brand">Energy Me / Architecture proposal</p>
+        <h1>Save one check-in per user, per day.</h1>
+        <p class="lede">
+          Keep Cognito for identity. Put a small authenticated API in front of
+          DynamoDB. Store the seven feelings under stable English keys and
+          preserve their 0-4 scale.
+        </p>
+        <p class="status">
+          Documentation only. No backend resources or application behavior
+          changed.
+        </p>
+        <div class="facts">
+          <div class="fact" id="one-table">
+            <strong>One table</strong
+            ><span>No separate users or feelings tables.</span>
+          </div>
+          <div class="fact" id="one-day">
+            <strong>One record per day</strong
+            ><span>The user ID and local date form the unique key.</span>
+          </div>
+          <div class="fact" id="seven-feelings">
+            <strong>Seven values, 0-4</strong
+            ><span>Zero is not felt; four is intense. Not zero to five.</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main>
+      <section id="architecture">
+        <div class="inner">
+          <h2>Where does a saved check-in go?</h2>
+          <p class="muted">
+            Vercel hosts the web app. AWS verifies identity and persists only
+            the authenticated user's records.
+          </p>
+          <div
+            class="mermaid mermaid-pending"
+            aria-label="Cognito-authenticated check-in persistence architecture"
+          >
+            flowchart TD Cognito[Existing Cognito + Google SSO] -->|Access
+            token| Web[React app / Vercel] Web -->|HTTPS + Bearer token|
+            API[HTTP API / JWT authorizer] API -->|Verified user claims|
+            Lambda[One check-ins Lambda] Lambda -->|IAM role| DB[(DynamoDB /
+            CheckIns)] DB -->|Saved item or history| Lambda Lambda --> API API
+            --> Web
+          </div>
+          <p>
+            <strong>Identity comes from the verified token.</strong> The client
+            never chooses the owner of a database record. No AWS credentials,
+            Cognito client secret, or Google client secret enter the browser.
+          </p>
+        </div>
+      </section>
+      <section id="record">
+        <div class="inner">
+          <h2>A small, self-describing record</h2>
+          <div class="grid">
+            <pre aria-label="Proposed DynamoDB document">
+{
+  "userId": "verified-cognito-sub",
+  "date": "2026-10-07",
+  "values": {
+    "anger": 0,
+    "frustration": 1,
+    "worry": 2,
+    "joy": 3,
+    "sadness": 0,
+    "guilt": 1,
+    "fear": 0
+  },
+  "createdAt": "2026-10-07T15:00:00.000Z",
+  "updatedAt": "2026-10-07T15:00:00.000Z",
+  "schemaVersion": 1
+}</pre
+            >
+            <div>
+              <h3 class="key">Partition key: userId</h3>
+              <p>
+                The Cognito <code>sub</code>, derived by the server. Email is
+                not a stable ownership key.
+              </p>
+              <h3 class="key">Sort key: date</h3>
+              <p>
+                A local calendar date, not a UTC creation timestamp. Updating
+                the same day replaces its values instead of creating another
+                record.
+              </p>
+              <h3>Server-owned timestamps</h3>
+              <p>
+                DynamoDB does not generate timestamps or enforce the feeling
+                schema. Preserve <code>createdAt</code> with
+                <code>if_not_exists</code>; update <code>updatedAt</code> on
+                each write.
+              </p>
+              <h3>Use a map, not an ordered array</h3>
+              <p>
+                Use anger, frustration, worry, joy, sadness, guilt, and fear in
+                the API and database. A repository adapter maps these to the
+                current Portuguese app IDs without changing labels or local
+                records. An array depends on a permanent order; adding or moving
+                a feeling can silently change what old data means.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="api">
+        <div class="inner">
+          <h2>The smallest useful API</h2>
+          <div class="grid">
+            <div>
+              <div class="endpoint">
+                <strong><code>PUT /checkins/{date}</code></strong
+                >Validate seven integer values, then save one day. Return the
+                canonical item. Last successful server write wins.
+              </div>
+              <div class="endpoint">
+                <strong><code>GET /checkins</code></strong
+                >Query only the current user's partition, in date order.
+                Optional date bounds and paginated responses; never scan the
+                table.
+              </div>
+              <div class="endpoint">
+                <strong><code>DELETE /checkins</code></strong
+                >Preserve the existing clear-all action only with confirmation
+                and real remote deletion. Otherwise hide it in v1.
+              </div>
+            </div>
+            <div>
+              <h3>Save means the server accepted it</h3>
+              <p>
+                Keep the draft while the request runs. Disable duplicate
+                submissions. Show the saved toast only after the response;
+                retain input when a request fails.
+              </p>
+              <h3>Do not mix demo and real data</h3>
+              <p>
+                Sample records currently look exactly like real records. Isolate
+                demo mode and require an explicit preview before importing local
+                history.
+              </p>
+              <h3 class="warning">Deletion is not a transaction</h3>
+              <p>
+                Clear-all needs paginated keys, bounded batch retries, and
+                recovery from partial deletion. Concurrent writes on another
+                device can create new records.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="alternatives">
+        <div class="inner">
+          <h2>Could this be simpler?</h2>
+          <div class="options">
+            <div class="option recommended" id="aws-native">
+              <h3>HTTP API + Lambda</h3>
+              <p class="key"><strong>Recommended AWS-native path</strong></p>
+              <p>
+                Reuse Cognito JWT validation and Lambda's IAM role. One API, one
+                function, one table.
+              </p>
+              <p class="muted">
+                More infrastructure than a Vercel Function, but no
+                cross-provider AWS credential setup.
+              </p>
+            </div>
+            <div class="option" id="vercel-function">
+              <h3>Vercel Function</h3>
+              <p><strong>Fewer deployed services</strong></p>
+              <p>
+                Keep DynamoDB and host the API beside the web app. Verify
+                Cognito JWTs server-side with a proven library.
+              </p>
+              <p class="muted">
+                Needs least-privilege AWS access from Vercel, preferably
+                workload identity federation.
+              </p>
+            </div>
+            <div class="option" id="generated-backend">
+              <h3>Managed CRUD</h3>
+              <p><strong>Less handwritten API code</strong></p>
+              <p>
+                Amplify Data generates CRUD with Cognito ownership rules.
+                Supabase or Firebase are also options for a different stack.
+              </p>
+              <p class="muted">
+                Amplify adds AppSync tooling; another platform needs an
+                authorization integration or a change of auth stack.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section id="implementation">
+        <div class="inner">
+          <h2>Implementation, after approval</h2>
+          <div class="grid">
+            <ol>
+              <li>
+                <strong>Provision AWS resources.</strong> One on-demand table, a
+                TypeScript Lambda, HTTP API, JWT authorizer, CORS, and narrowly
+                scoped IAM.
+              </li>
+              <li>
+                <strong>Implement GET and PUT.</strong> Strict dates and values,
+                token-derived ownership, server timestamps, pagination, and
+                explicit errors.
+              </li>
+              <li>
+                <strong>Replace synchronous storage calls.</strong> Remote
+                loading and confirmed saves; abort or ignore late responses when
+                the account changes.
+              </li>
+              <li>
+                <strong>Test real isolation and recovery.</strong> Two accounts,
+                two devices, repeated daily edits, expired tokens, network
+                errors, and partial deletion if enabled.
+              </li>
+            </ol>
+            <div>
+              <h3>Initial boundaries</h3>
+              <ul>
+                <li>
+                  No automatic offline synchronization or silent local-data
+                  import.
+                </li>
+                <li>
+                  No secondary indexes, VPC, separate user table, or stored
+                  summary data.
+                </li>
+                <li>
+                  Emotional data stays out of application logs. Enable recovery,
+                  log retention, throttling, and alarms.
+                </li>
+                <li>
+                  API, Lambda, database, logs, and backups have costs. Small
+                  serverless usage is not a promise of free hosting.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="inner">
+      Source of truth: docs/checkin-persistence.md. Model verified against
+      web/src/domain/checkins.ts and web/src/domain/feelings.ts. Visual design
+      follows Energy Me's existing colors and typography.
+    </footer>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      const style = getComputedStyle(document.documentElement);
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          fontFamily: "Figtree, Segoe UI, sans-serif",
+          primaryColor: style.getPropertyValue("--soft").trim(),
+          primaryTextColor: style.getPropertyValue("--ink").trim(),
+          primaryBorderColor: style.getPropertyValue("--accent").trim(),
+          lineColor: style.getPropertyValue("--muted").trim(),
+          secondaryColor: style.getPropertyValue("--card").trim(),
+          tertiaryColor: style.getPropertyValue("--surface").trim(),
+          edgeLabelBackground: style.getPropertyValue("--surface").trim(),
+          textColor: style.getPropertyValue("--ink").trim(),
+        },
+        flowchart: { htmlLabels: false, useMaxWidth: true },
+      });
+      try {
+        await mermaid.run({ querySelector: ".mermaid" });
+        document.querySelector(".mermaid").classList.remove("mermaid-pending");
+      } catch {
+        document
+          .querySelector(".mermaid")
+          .setAttribute(
+            "aria-label",
+            "Architecture diagram source; diagram rendering unavailable",
+          );
+      }
+    </script>
+  </body>
+</html>

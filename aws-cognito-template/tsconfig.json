@@ -2,7 +2,9 @@
     "extends": "expo/tsconfig.base",
     "compilerOptions": {
         "strict": true,
-        "types": ["node"],
+        "types": [
+            "node"
+        ],
         "moduleResolution": "bundler",
         "jsx": "react-jsx",
         "skipLibCheck": true

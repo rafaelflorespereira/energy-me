@@ -1,0 +1,49 @@
+name: Infrastructure Checks
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-checks.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - ".github/workflows/infra-checks.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infra-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra
+    env:
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - name: Check Out
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Set Up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: infra/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Compile
+        run: npm run build
+      - name: Test
+        run: npm test
+      - name: Synthesize Development
+        run: npm run synth -- --no-lookups -c stage=dev --output cdk.out/dev --quiet
+      - name: Synthesize Production
+        run: npm run synth -- --no-lookups -c stage=prod --output cdk.out/prod --quiet
