@@ -57,3 +57,12 @@ src/
 - Um registro por dia. Registrar de novo no mesmo dia atualiza o de hoje.
 - Resumo abre com a análise do período escolhido (semana = 7 dias, mês = 30 dias) comparada ao período anterior de mesmo tamanho. Para alegria, subir é melhora; para os demais, descer é melhora.
 - Cores e órgãos seguem os Cinco Elementos. Culpa está ligada ao Rim (Água), a confirmar.
+
+## Cenários do resumo
+
+O resumo ganha um fundo animado conforme o sentimento mais intenso do check-in de **hoje** (empate segue a ordem dos sentimentos do app). A intensidade de hoje deixa as cores mais vivas e a animação mais rápida; sem check-in hoje, o fundo fica neutro. A lógica está em `src/ui/scenery.ts` e o componente em `src/ui/Scenery.tsx`; nada disso é gravado nos check-ins.
+
+- Cada sentimento tem uma imagem (`.webp`) e um vídeo mudo em loop (`.webm` e `.mp4`), em retrato (`-mobile`) e paisagem (`-desktop`), em `public/scenery/`. Só a cena escolhida é carregada.
+- Com movimento reduzido ou economia de dados, aparece só a imagem. O vídeo pausa quando a aba fica oculta.
+- Uma barra abaixo de Semana/Mês mostra o que define o cenário ("Hoje: Raiva, intensa"), com pausar e desligar (volta ao fundo neutro). A escolha fica no aparelho, separada dos registros.
+- Os arquivos são gerados por [`tools/scenery`](../tools/scenery/README.md). Ao gerar de novo, aumente `SCENERY_VERSION` em `src/ui/scenery.ts` para renovar o cache.

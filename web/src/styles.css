@@ -202,6 +202,70 @@ button:focus-visible {
   gap: 12px;
   padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 16px;
 }
+/* Cenário: fundo decorativo atrás do resumo, sem receber toques nem mudar o layout */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.stage > .view {
+  position: relative;
+  z-index: 1;
+}
+.scenery {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  background: var(--surface);
+  transition: opacity 0.6s ease;
+}
+.scenery.off {
+  opacity: 0;
+}
+.scenery-layer {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+.scenery-layer.on {
+  opacity: 1;
+}
+.scenery-layer img,
+.scenery-layer video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 100%;
+  filter: saturate(var(--scene-sat, 1)) brightness(var(--scene-bri, 1));
+}
+.scenery-layer video {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+.scenery-layer video.playing {
+  opacity: 1;
+}
+.scenery::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--surface) 95%, transparent) 0,
+    color-mix(in srgb, var(--surface) 80%, transparent) 110px,
+    color-mix(in srgb, var(--surface) 30%, transparent) 220px,
+    transparent 320px
+  );
+}
+
 .tabbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -274,6 +338,11 @@ button:focus-visible {
   }
   .view-summary > .analysis {
     grid-column: 1;
+  }
+  .view-summary > .scenery-bar {
+    grid-column: 1 / -1;
+    justify-self: start;
+    width: min(100%, 560px);
   }
   .view-summary > .analysis + .card,
   .view-summary > .analysis + .card + .card {
@@ -691,6 +760,96 @@ svg text {
   font-size: 12.5px;
   color: var(--muted);
 }
+.scenery-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 14px;
+  background: var(--soft);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.scenery-what {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.scenery-what b {
+  color: var(--ink);
+}
+.scenery-actions {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+.scenery-btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+.scenery-btn.icon {
+  padding: 6px;
+}
+.scenery-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.scenery-btn[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+/* Com cenário: superfícies estáveis e legíveis por cima da imagem.
+   O texto secundário fica um pouco mais forte para manter o contraste sobre cenas escuras ou claras. */
+.with-scenery {
+  --muted: #58635d;
+}
+@media (prefers-color-scheme: dark) {
+  .with-scenery {
+    --muted: #a6b2ab;
+  }
+}
+.with-scenery .hd small {
+  color: var(--ink);
+}
+.with-scenery .card,
+.with-scenery .scenery-bar,
+.with-scenery .footer {
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  backdrop-filter: blur(16px) saturate(1.1);
+}
+.with-scenery .analysis {
+  background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 90%, transparent);
+}
+.with-scenery .period {
+  background: color-mix(in srgb, var(--soft) 84%, transparent);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+.with-scenery .footer {
+  align-self: center;
+  justify-self: center;
+  border-radius: 14px;
+  padding: 2px 8px;
+}
+
 .toast {
   position: absolute;
   left: 50%;

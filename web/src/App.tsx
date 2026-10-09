@@ -5,6 +5,8 @@ import { type Values } from "./domain/feelings";
 import { sampleCheckIns } from "./domain/sample";
 import { type CheckInRepository } from "./repository";
 import { CheckInScreen } from "./ui/CheckInScreen";
+import { Scenery, useSceneryMotion, useSceneryPrefs } from "./ui/Scenery";
+import { sceneForToday } from "./ui/scenery";
 import { SummaryScreen } from "./ui/SummaryScreen";
 
 type Tab = "checkin" | "resumo";
@@ -89,6 +91,21 @@ export function App({
   };
 
   const todays = checkins.find((c) => c.date === today)?.values ?? null;
+  const scene = useMemo(() => sceneForToday(checkins, today), [checkins, today]);
+  const [sceneryPrefs, setSceneryPrefs] = useSceneryPrefs();
+  const sceneryMotion = useSceneryMotion();
+  const showScenery =
+    tab === "resumo" && status === "ready" && sceneryPrefs.enabled && scene !== null;
+  // Mantém o cenário montado por um instante ao sair, para ele sumir com fade.
+  const [sceneryMounted, setSceneryMounted] = useState(showScenery);
+  useEffect(() => {
+    if (showScenery) {
+      setSceneryMounted(true);
+      return;
+    }
+    const t = window.setTimeout(() => setSceneryMounted(false), 700);
+    return () => window.clearTimeout(t);
+  }, [showScenery]);
 
   const save = async (values: Values) => {
     const r = repo.current;
@@ -116,42 +133,64 @@ export function App({
   return (
     <div className="app">
       {accountHeader}
-      <main className={`view view-${tab === "resumo" ? "summary" : "checkin"}`}>
-        {status === "loading" ? (
-          <section className="card empty" role="status" aria-busy="true">
-            <p>Carregando seus check-ins...</p>
-          </section>
-        ) : status === "error" ? (
-          <section className="card empty">
-            <h2>Não foi possível carregar</h2>
-            <p role="alert">
-              Seus check-ins não foram carregados. Verifique a conexão.
-            </p>
-            <button className="cta" type="button" onClick={load}>
-              Tentar de novo
-            </button>
-          </section>
-        ) : tab === "checkin" ? (
-          <CheckInScreen
-            key={todays ? "edit" : "new"}
-            today={today}
-            existing={todays}
-            onSave={save}
-            saving={saving}
-            saveError={saveError}
+      <div className="stage">
+        {sceneryMounted && scene ? (
+          <Scenery
+            scene={scene}
+            visible={showScenery}
+            motion={sceneryMotion}
+            paused={sceneryPrefs.paused}
           />
-        ) : (
-          <SummaryScreen
-            checkins={checkins}
-            today={today}
-            onGoCheckIn={() => setTab("checkin")}
-            onLoadSample={
-              local ? () => replaceAll(sampleCheckIns(today)) : undefined
-            }
-            onClear={local ? () => replaceAll([]) : undefined}
-          />
-        )}
-      </main>
+        ) : null}
+        <main
+          className={`view view-${tab === "resumo" ? "summary" : "checkin"}${showScenery ? " with-scenery" : ""}`}
+        >
+          {status === "loading" ? (
+            <section className="card empty" role="status" aria-busy="true">
+              <p>Carregando seus check-ins...</p>
+            </section>
+          ) : status === "error" ? (
+            <section className="card empty">
+              <h2>Não foi possível carregar</h2>
+              <p role="alert">
+                Seus check-ins não foram carregados. Verifique a conexão.
+              </p>
+              <button className="cta" type="button" onClick={load}>
+                Tentar de novo
+              </button>
+            </section>
+          ) : tab === "checkin" ? (
+            <CheckInScreen
+              key={todays ? "edit" : "new"}
+              today={today}
+              existing={todays}
+              onSave={save}
+              saving={saving}
+              saveError={saveError}
+            />
+          ) : (
+            <SummaryScreen
+              checkins={checkins}
+              today={today}
+              onGoCheckIn={() => setTab("checkin")}
+              onLoadSample={
+                local ? () => replaceAll(sampleCheckIns(today)) : undefined
+              }
+              onClear={local ? () => replaceAll([]) : undefined}
+              scenery={
+                scene
+                  ? {
+                      scene,
+                      prefs: sceneryPrefs,
+                      motion: sceneryMotion,
+                      onChange: setSceneryPrefs,
+                    }
+                  : undefined
+              }
+            />
+          )}
+        </main>
+      </div>
       <nav className="tabbar" role="tablist" aria-label="Telas">
         <button
           type="button"
