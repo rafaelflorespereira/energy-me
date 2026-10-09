@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { ApiError, createCheckInsApi, fromApiValues, toApiValues } from './checkinsApi'
+import {
+  ApiError,
+  createCheckInsApi,
+  fetchSharedView,
+  fromApiValues,
+  shareUrl,
+  toApiValues,
+  tokenFromHash,
+} from './checkinsApi'
 import { emptyValues, type Values } from './domain/feelings'
 import { localRepository, remoteRepository } from './repository'
 
@@ -106,5 +114,66 @@ describe('repositories', () => {
     const next = await repo.save([], { date: '2026-10-07', values: VALUES })
     expect(await repo.load()).toEqual(next)
     vi.unstubAllGlobals()
+  })
+})
+
+describe('share link', () => {
+  const TOKEN = 'a'.repeat(43)
+
+  it('creates, reads and revokes the link with the owner token', async () => {
+    const share = { createdAt: '2026-10-09T12:00:00.000Z', expiresAt: null }
+    const { api, fetch } = setup(
+      response(201, { token: TOKEN, share }),
+      response(200, { share }),
+      response(200, { share: null }),
+    )
+    expect(await api.createShare(null)).toEqual({ token: TOKEN, share })
+    expect(await api.getShare()).toEqual(share)
+    await api.revokeShare()
+    expect(fetch.mock.calls.map(([url, init]) => [url, init?.method ?? 'GET'])).toEqual([
+      ['https://api.test/share', 'PUT'],
+      ['https://api.test/share', 'GET'],
+      ['https://api.test/share', 'DELETE'],
+    ])
+    expect(JSON.parse(fetch.mock.calls[0][1]?.body as string)).toEqual({ expiresInDays: null })
+    for (const [, init] of fetch.mock.calls) {
+      expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer stale')
+    }
+  })
+
+  it('puts the token after the # and only accepts well-formed tokens', () => {
+    expect(shareUrl('https://energy-me.vercel.app/', TOKEN)).toBe(`https://energy-me.vercel.app/ver#${TOKEN}`)
+    expect(tokenFromHash(`#${TOKEN}`)).toBe(TOKEN)
+    expect(tokenFromHash('#abc')).toBeNull()
+    expect(tokenFromHash('')).toBeNull()
+  })
+
+  it('reads the shared view without credentials', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValueOnce(
+      response(200, {
+        items: [
+          { date: '2026-10-08', values: API_VALUES },
+          { date: '2026-10-01', values: API_VALUES },
+        ],
+        expiresAt: '2026-10-16T12:00:00.000Z',
+      }),
+    )
+    const view = await fetchSharedView('https://api.test/', TOKEN, { fetch })
+    expect(view).toEqual({
+      checkins: [
+        { date: '2026-10-01', values: VALUES },
+        { date: '2026-10-08', values: VALUES },
+      ],
+      expiresAt: '2026-10-16T12:00:00.000Z',
+    })
+    const [url, init] = fetch.mock.calls[0]
+    expect(url).toBe(`https://api.test/public/share/${TOKEN}`)
+    expect(new Headers(init?.headers).get('Authorization')).toBeNull()
+    expect(init?.credentials).toBe('omit')
+  })
+
+  it('reports a revoked or expired link as null', async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValueOnce(response(404, { error: 'NOT_FOUND' }))
+    expect(await fetchSharedView('https://api.test', TOKEN, { fetch })).toBeNull()
   })
 })

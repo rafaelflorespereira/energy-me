@@ -1,4 +1,4 @@
-import { Cloud, LoaderCircle, LogOut, Smartphone } from "lucide-react";
+import { Cloud, LoaderCircle, LogOut, Share2, Smartphone } from "lucide-react";
 
 /**
  * Conta no canto do cabeçalho: um avatar que abre um menu curto com quem
@@ -10,12 +10,15 @@ export function AccountMenu({
   email,
   remote,
   busy,
+  onShare,
   onSignOut,
 }: {
   name: string;
   email?: string;
   remote: boolean;
   busy: boolean;
+  /** Só com os dados na nuvem: o link lê da API. */
+  onShare?: () => void;
   onSignOut: () => void;
 }) {
   const initial = (name.trim()[0] ?? "?").toUpperCase();
@@ -47,6 +50,18 @@ export function AccountMenu({
           )}
           {remote ? "Check-ins salvos na nuvem" : "Check-ins salvos neste aparelho"}
         </p>
+        {onShare ? (
+          <button
+            className="account-item"
+            type="button"
+            popoverTarget="account-menu"
+            popoverTargetAction="hide"
+            onClick={onShare}
+          >
+            <Share2 size={18} aria-hidden="true" />
+            Compartilhar meus sentimentos
+          </button>
+        ) : null}
         <button
           className="account-signout"
           type="button"

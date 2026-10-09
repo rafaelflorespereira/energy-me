@@ -13,7 +13,7 @@ const template = Template.fromStack(
 
 describe("check-in infrastructure", () => {
   it("retains and protects an on-demand table with the user/date key", () => {
-    template.resourceCountIs("AWS::DynamoDB::Table", 1);
+    template.resourceCountIs("AWS::DynamoDB::Table", 2);
     template.hasResource("AWS::DynamoDB::Table", {
       DeletionPolicy: "Retain",
       UpdateReplacePolicy: "Retain",
@@ -29,15 +29,39 @@ describe("check-in infrastructure", () => {
         ],
       },
     });
+    template.hasResource("AWS::DynamoDB::Table", {
+      DeletionPolicy: "Retain",
+      Properties: {
+        TableName: "energy-me-shares-prod",
+        BillingMode: "PAY_PER_REQUEST",
+        DeletionProtectionEnabled: true,
+        SSESpecification: { SSEEnabled: true },
+        KeySchema: [{ AttributeName: "pk", KeyType: "HASH" }],
+        TimeToLiveSpecification: { AttributeName: "ttl", Enabled: true },
+      },
+    });
     template.resourceCountIs("AWS::Cognito::UserPool", 0);
     template.resourceCountIs("AWS::Cognito::UserPoolClient", 0);
   });
 
   it("protects every data route with Cognito JWTs and the openid scope", () => {
-    template.resourceCountIs("AWS::ApiGatewayV2::Route", 2);
-    for (const route of Object.values(
+    const routes = Object.values(
       template.findResources("AWS::ApiGatewayV2::Route"),
-    )) {
+    );
+    expect(routes.map((r) => r.Properties.RouteKey).sort()).toEqual([
+      "DELETE /share",
+      "GET /checkins",
+      "GET /public/share/{token}",
+      "GET /share",
+      "PUT /checkins/{date}",
+      "PUT /share",
+    ]);
+    // Só o link público fica sem login, e só para leitura.
+    const [open] = routes.filter((r) => r.Properties.AuthorizationType !== "JWT");
+    expect(open.Properties.RouteKey).toBe("GET /public/share/{token}");
+    expect(open.Properties.AuthorizationType).toBe("NONE");
+    expect(open.Properties.AuthorizationScopes).toBeUndefined();
+    for (const route of routes.filter((r) => r !== open)) {
       expect(route.Properties.AuthorizationType).toBe("JWT");
       expect(route.Properties.AuthorizationScopes).toEqual(["openid"]);
       expect(route.Properties.AuthorizerId).toBeDefined();
@@ -72,7 +96,7 @@ describe("check-in infrastructure", () => {
       CorsConfiguration: {
         AllowOrigins: [{ Ref: "WebOrigin" }],
         AllowHeaders: ["Authorization", "Content-Type"],
-        AllowMethods: ["GET", "PUT"],
+        AllowMethods: ["GET", "PUT", "DELETE"],
         MaxAge: 3600,
       },
     });
@@ -93,7 +117,7 @@ describe("check-in infrastructure", () => {
         Format: Match.anyValue(),
       },
     });
-    template.resourceCountIs("AWS::CloudWatch::Alarm", 2);
+    template.resourceCountIs("AWS::CloudWatch::Alarm", 3);
   });
 
   it("emails alarms and an account budget to the configured address", () => {
@@ -133,26 +157,52 @@ describe("check-in infrastructure", () => {
     });
   });
 
-  it("grants only Query and UpdateItem on this table", () => {
-    const statements = Object.values(
-      template.findResources("AWS::IAM::Policy"),
-    ).flatMap((policy) => policy.Properties.PolicyDocument.Statement);
-    const database = statements.filter((statement) =>
-      JSON.stringify(statement.Action).includes("dynamodb:"),
-    );
-    expect(database).toHaveLength(1);
-    expect(database[0].Action).toEqual([
-      "dynamodb:Query",
-      "dynamodb:UpdateItem",
-    ]);
-    expect(database[0].Resource).not.toBe("*");
-    expect(database[0].Resource).toEqual({
-      "Fn::GetAtt": [expect.stringMatching(/^CheckIns/), "Arn"],
+  it("grants each Lambda only the table actions it needs", () => {
+    const tableRef = (prefix: RegExp) => ({
+      "Fn::GetAtt": [expect.stringMatching(prefix), "Arn"],
     });
+    const byPolicy = Object.entries(
+      template.findResources("AWS::IAM::Policy"),
+    ).map(([id, policy]) => ({
+      id,
+      database: (
+        policy.Properties.PolicyDocument.Statement as {
+          Action: unknown;
+          Resource: unknown;
+        }[]
+      ).filter((s) => JSON.stringify(s.Action).includes("dynamodb:")),
+    }));
+    const checkIns = byPolicy.find((p) => p.id.startsWith("CheckInsHandler"));
+    const shares = byPolicy.find((p) => p.id.startsWith("SharesHandler"));
+    expect(checkIns?.database).toEqual([
+      {
+        Effect: "Allow",
+        Action: ["dynamodb:Query", "dynamodb:UpdateItem"],
+        Resource: tableRef(/^CheckIns/),
+      },
+    ]);
+    // O link só lê check-ins; escrita apenas na tabela de links.
+    expect(shares?.database).toEqual([
+      {
+        Effect: "Allow",
+        Action: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+        Resource: tableRef(/^Shares/),
+      },
+      {
+        Effect: "Allow",
+        Action: "dynamodb:Query",
+        Resource: tableRef(/^CheckIns/),
+      },
+    ]);
   });
 
-  it("bundles one bounded Lambda without a VPC or secrets", () => {
-    template.resourceCountIs("AWS::Lambda::Function", 1);
+  it("bundles bounded Lambdas without a VPC or secrets", () => {
+    template.resourceCountIs("AWS::Lambda::Function", 2);
+    const tables = template.findResources("AWS::DynamoDB::Table");
+    const tableId = (name: string) =>
+      Object.keys(tables).find(
+        (id) => tables[id].Properties.TableName === name,
+      );
     template.hasResourceProperties("AWS::Lambda::Function", {
       Runtime: "nodejs22.x",
       Architectures: ["arm64"],
@@ -162,19 +212,30 @@ describe("check-in infrastructure", () => {
       VpcConfig: Match.absent(),
       Environment: {
         Variables: {
-          TABLE_NAME: {
-            Ref: Object.keys(template.findResources("AWS::DynamoDB::Table"))[0],
-          },
+          TABLE_NAME: { Ref: tableId("energy-me-checkins-prod") },
           APP_STAGE: "prod",
         },
       },
     });
-    const [functionResource] = Object.values(
+    template.hasResourceProperties("AWS::Lambda::Function", {
+      Runtime: "nodejs22.x",
+      ReservedConcurrentExecutions: 5,
+      VpcConfig: Match.absent(),
+      Environment: {
+        Variables: {
+          SHARES_TABLE_NAME: { Ref: tableId("energy-me-shares-prod") },
+          CHECKINS_TABLE_NAME: { Ref: tableId("energy-me-checkins-prod") },
+          APP_STAGE: "prod",
+        },
+      },
+    });
+    for (const fn of Object.values(
       template.findResources("AWS::Lambda::Function"),
-    );
-    expect(
-      Object.keys(functionResource.Properties.Environment.Variables).sort(),
-    ).toEqual(["APP_STAGE", "TABLE_NAME"]);
+    )) {
+      for (const key of Object.keys(fn.Properties.Environment.Variables)) {
+        expect(key).toMatch(/^(APP_STAGE|[A-Z_]*TABLE_NAME)$/);
+      }
+    }
   });
 
   it("defaults to development and rejects unsupported stages", () => {

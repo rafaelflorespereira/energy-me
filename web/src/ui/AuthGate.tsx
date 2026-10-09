@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 import type { User } from "oidc-client-ts";
 import { getAuthClient, type AuthClient } from "../auth";
 import { App } from "../App";
 import { AccountMenu } from "./AccountMenu";
+import { ShareDialog } from "./ShareDialog";
 import { createCheckInsApi } from "../checkinsApi";
 import {
   localRepository,
@@ -92,33 +93,40 @@ export function AuthGate() {
   };
 
   const userId = user?.profile.sub ?? "";
-  const repository = useCallback(
-    (signal: AbortSignal): CheckInRepository => {
-      if (!API_URL || !client) return localRepository(userId);
+  const getToken = useCallback(
+    async (renew: boolean) => {
+      if (!client) return null;
       const manager = client.manager;
-      return remoteRepository(
-        createCheckInsApi({
-          baseUrl: API_URL,
-          signal,
-          getToken: async (renew) => {
-            try {
-              const current = renew
-                ? await manager.signinSilent()
-                : await manager.getUser();
-              if (!current || current.expired) return null;
-              // Garante que o token é da conta que abriu esta tela.
-              return current.profile.sub === userId
-                ? current.access_token
-                : null;
-            } catch {
-              return null;
-            }
-          },
-        }),
-      );
+      try {
+        const current = renew
+          ? await manager.signinSilent()
+          : await manager.getUser();
+        if (!current || current.expired) return null;
+        // Garante que o token é da conta que abriu esta tela.
+        return current.profile.sub === userId ? current.access_token : null;
+      } catch {
+        return null;
+      }
     },
     [client, userId],
   );
+  const repository = useCallback(
+    (signal: AbortSignal): CheckInRepository => {
+      if (!API_URL || !client) return localRepository(userId);
+      return remoteRepository(
+        createCheckInsApi({ baseUrl: API_URL, signal, getToken }),
+      );
+    },
+    [client, userId, getToken],
+  );
+  const shareApi = useMemo(
+    () =>
+      API_URL && client && userId
+        ? createCheckInsApi({ baseUrl: API_URL, getToken })
+        : null,
+    [client, userId, getToken],
+  );
+  const [sharing, setSharing] = useState(false);
 
   if (loading) {
     return (
@@ -185,8 +193,16 @@ export function AuthGate() {
             email={user.profile.email}
             remote={Boolean(API_URL && client)}
             busy={busy}
+            onShare={shareApi ? () => setSharing(true) : undefined}
             onSignOut={signOut}
           />
+          {shareApi ? (
+            <ShareDialog
+              open={sharing}
+              onClose={() => setSharing(false)}
+              api={shareApi}
+            />
+          ) : null}
         </header>
       )}
     />

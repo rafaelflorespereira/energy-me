@@ -92,6 +92,18 @@ export class CheckInsStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     });
 
+    // Link de leitura: no máximo um por conta (ver lambda/shares.ts). Só guarda
+    // o hash do link; links vencidos somem pelo TTL.
+    const shares = new dynamodb.Table(this, "Shares", {
+      tableName: `energy-me-shares-${stage}`,
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      encryption: dynamodb.TableEncryption.AWS_MANAGED,
+      timeToLiveAttribute: "ttl",
+      deletionProtection: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+    });
+
     const functionLogs = new logs.LogGroup(this, "FunctionLogs", {
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy:
@@ -120,6 +132,37 @@ export class CheckInsStack extends Stack {
       }),
     );
 
+    const sharesHandler = new nodejs.NodejsFunction(this, "SharesHandler", {
+      entry: path.join(__dirname, "../lambda/shares.ts"),
+      depsLockFilePath: path.join(__dirname, "../package-lock.json"),
+      handler: "handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      memorySize: 256,
+      timeout: Duration.seconds(10),
+      reservedConcurrentExecutions: stage === "prod" ? 5 : 2,
+      logGroup: functionLogs,
+      environment: {
+        SHARES_TABLE_NAME: shares.tableName,
+        CHECKINS_TABLE_NAME: table.tableName,
+        APP_STAGE: stage,
+      },
+      bundling: { minify: true, sourceMap: true },
+    });
+    sharesHandler.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"],
+        resources: [shares.tableArn],
+      }),
+    );
+    // Só leitura nos check-ins: o link nunca altera dados.
+    sharesHandler.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:Query"],
+        resources: [table.tableArn],
+      }),
+    );
+
     // The pool ID starts with its own region, which can differ from the stack's.
     const poolRegion = Fn.select(0, Fn.split("_", poolId.valueAsString));
     const authorizer = new authorizers.HttpJwtAuthorizer(
@@ -138,6 +181,7 @@ export class CheckInsStack extends Stack {
         allowMethods: [
           apigateway.CorsHttpMethod.GET,
           apigateway.CorsHttpMethod.PUT,
+          apigateway.CorsHttpMethod.DELETE,
         ],
         maxAge: Duration.hours(1),
       },
@@ -155,6 +199,29 @@ export class CheckInsStack extends Stack {
       path: "/checkins/{date}",
       methods: [apigateway.HttpMethod.PUT],
       integration,
+    });
+
+    const sharesIntegration = new integrations.HttpLambdaIntegration(
+      "SharesIntegration",
+      sharesHandler,
+    );
+    api.addRoutes({
+      path: "/share",
+      methods: [
+        apigateway.HttpMethod.GET,
+        apigateway.HttpMethod.PUT,
+        apigateway.HttpMethod.DELETE,
+      ],
+      integration: sharesIntegration,
+    });
+    // A única rota sem login: quem tem o link vê o resumo, sem poder alterar.
+    api.addRoutes({
+      path: "/public/share/{token}",
+      methods: [apigateway.HttpMethod.GET],
+      integration: sharesIntegration,
+      authorizer: new apigateway.HttpNoneAuthorizer(),
+      // Escopos só valem com JWT; deixar o padrão aqui faria o deploy falhar.
+      authorizationScopes: [],
     });
 
     const apiLogs = new logs.LogGroup(this, "ApiLogs", {
@@ -213,7 +280,15 @@ export class CheckInsStack extends Stack {
       alarmDescription: "Check-in HTTP API server failures.",
     });
 
-    for (const alarm of [functionErrors, apiServerErrors]) {
+    const sharesErrors = new cloudwatch.Alarm(this, "SharesFunctionErrors", {
+      metric: sharesHandler.metricErrors({ period: Duration.minutes(5) }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      alarmDescription: "Share link Lambda invocation failures.",
+    });
+
+    for (const alarm of [functionErrors, sharesErrors, apiServerErrors]) {
       alarm.addAlarmAction(notify);
     }
 
@@ -243,9 +318,10 @@ export class CheckInsStack extends Stack {
 
     new CfnOutput(this, "CheckInsApiUrl", { value: api.apiEndpoint });
     new CfnOutput(this, "CheckInsTableName", { value: table.tableName });
+    new CfnOutput(this, "SharesTableName", { value: shares.tableName });
     new CfnOutput(this, "PersistenceStatus", {
       value:
-        "GET /checkins and PUT /checkins/{date} implemented; clear-all not yet.",
+        "GET /checkins, PUT /checkins/{date} and the read-only share link implemented; clear-all not yet.",
     });
   }
 }
