@@ -7,6 +7,7 @@ import { type CheckInRepository } from "./repository";
 import { CheckInScreen } from "./ui/CheckInScreen";
 import { Scenery, useSceneryMotion, useSceneryPrefs } from "./ui/Scenery";
 import { sceneForToday, sceneForValues } from "./ui/scenery";
+import { SceneryChip } from "./ui/SceneryChip";
 import { SummaryScreen } from "./ui/SummaryScreen";
 
 type Tab = "checkin" | "resumo";
@@ -46,7 +47,8 @@ export function App({
 }: {
   /** Criado uma vez por conta; o sinal cancela pedidos ao sair ou trocar de conta. */
   repository: (signal: AbortSignal) => CheckInRepository;
-  accountHeader: ReactNode;
+  /** Cabeçalho da conta; recebe a legenda do cenário para mostrar ao lado da marca. */
+  accountHeader: (scenery: ReactNode) => ReactNode;
 }) {
   const [checkins, setCheckins] = useState<CheckIn[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
@@ -141,7 +143,16 @@ export function App({
 
   return (
     <div className="app">
-      {accountHeader}
+      {accountHeader(
+        status === "ready" && shownScene ? (
+          <SceneryChip
+            scene={shownScene}
+            prefs={sceneryPrefs}
+            motion={sceneryMotion}
+            onChange={setSceneryPrefs}
+          />
+        ) : null,
+      )}
       <div className="stage">
         {sceneryMounted && lastScene ? (
           <Scenery
@@ -187,16 +198,6 @@ export function App({
                 local ? () => replaceAll(sampleCheckIns(today)) : undefined
               }
               onClear={local ? () => replaceAll([]) : undefined}
-              scenery={
-                scene
-                  ? {
-                      scene,
-                      prefs: sceneryPrefs,
-                      motion: sceneryMotion,
-                      onChange: setSceneryPrefs,
-                    }
-                  : undefined
-              }
             />
           )}
         </main>
