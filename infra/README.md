@@ -1,6 +1,6 @@
 # Check-in infrastructure
 
-TypeScript AWS CDK v2 scaffold for the architecture in [the persistence proposal](../docs/checkin-persistence.md). Region: `eu-central-1` (Frankfurt). The Cognito user pool can stay in another region; the JWT issuer uses the region in the pool ID.
+TypeScript AWS CDK v2 stack for the architecture in [the persistence proposal](../docs/checkin-persistence.md). Region: `eu-central-1` (Frankfurt). The Cognito user pool can stay in another region; the JWT issuer uses the region in the pool ID.
 
 ## Current scope
 
@@ -8,12 +8,12 @@ TypeScript AWS CDK v2 scaffold for the architecture in [the persistence proposal
 - One Node.js 22 ARM64 Lambda with bounded timeout, memory, concurrency, and explicit log retention. Its role grants only `Query` and `UpdateItem` on this table.
 - API Gateway HTTP API with `GET /checkins` and `PUT /checkins/{date}`, an existing Cognito JWT issuer/client audience, required `openid` scope, exact-origin CORS, and stage throttling.
 - Access logs contain request ID, route key, status, and latency, not user identities, query strings, authorization headers, request bodies, or feeling values.
-- CloudWatch alarms for Lambda invocation errors and API 5xx responses. Notification actions are not configured yet; attach an approved notification destination before real production use.
+- CloudWatch alarms for Lambda invocation errors and API 5xx responses, sent by email through an SNS topic, plus a monthly account-wide cost budget that emails the same address.
 - Separate `dev` and `prod` stack/table names. Production stack termination protection is enabled by the CDK entry point. Both environments retain and protect their tables.
 
-**The API implements `GET /checkins` and `PUT /checkins/{date}`** per [the persistence contract](../docs/checkin-persistence.md): access token required, owner taken from the verified `sub`, seven English feeling keys with integer intensities 0 to 4, real calendar dates, and a date-only pagination cursor. Handler tests run against a stubbed DynamoDB client. DELETE (clear-all) is not exposed, and the role has no delete permission. The current web app still uses local storage until the web repository is wired to this API.
+**The API implements `GET /checkins` and `PUT /checkins/{date}`** per [the persistence contract](../docs/checkin-persistence.md): access token required, owner taken from the verified `sub`, seven English feeling keys with integer intensities 0 to 4, real calendar dates, and a date-only pagination cursor. Handler tests run against a stubbed DynamoDB client. DELETE (clear-all) is not exposed, and the role has no delete permission. The web app uses this API when `VITE_CHECKINS_API_URL` is set and falls back to local storage otherwise.
 
-English feeling keys (`anger`, `frustration`, `worry`, `joy`, `sadness`, `guilt`, `fear`) and the integer 0-4 validation belong to that next handler implementation, not the DynamoDB table key schema.
+English feeling keys (`anger`, `frustration`, `worry`, `joy`, `sadness`, `guilt`, `fear`) and the integer 0-4 validation live in the handler, not in the DynamoDB table key schema.
 
 ## Local verification
 
@@ -92,12 +92,12 @@ npm run deploy -- --profile energy-me-dev -c stage=dev \
 
 The script requires approval for permission broadening, but that does not replace review of other changes such as resource replacements. Production uses the corresponding approved production profile and `-c stage=prod`, never a development role.
 
-The output `CheckInsApiUrl` will eventually become the public `VITE_CHECKINS_API_URL` in Vercel. Vercel has no need for AWS credentials in this architecture.
+Set the output `CheckInsApiUrl` as the public `VITE_CHECKINS_API_URL` in Vercel and redeploy the web app. Vercel has no need for AWS credentials in this architecture.
 
 ## Safety before production
 
-- Implement and test GET/PUT validation, English values, token-derived ownership, pagination, and server-owned timestamps. Keep clear-all disabled until its remote behavior is implemented.
-- Configure an alarm notification action, budget alerts, and environment-appropriate concurrency/rate limits. Lambda reserved concurrency requires enough account quota: AWS reserves an unallocated pool, so new accounts with low quotas may need a quota increase or a reviewed configuration change before deployment.
+- Keep clear-all disabled until its remote behavior is implemented.
+- Confirm the SNS email subscription after deploy, or alarms reach no one. Review concurrency/rate limits per environment. Lambda reserved concurrency requires enough account quota: AWS reserves an unallocated pool, so new accounts with low quotas may need a quota increase or a reviewed configuration change before deployment.
 - Run cross-account/user authorization tests and save/read acceptance tests against development before production. Synthesis does not verify Cognito settings, account quotas, IAM deployment permissions, or live API behavior.
 - Recheck `npm audit` before release. At initial scaffold creation, `aws-cdk-lib@2.272.0` bundles `brace-expansion@5.0.9`, which npm reports with high-severity denial-of-service advisories. `npm audit fix` cannot replace that bundled copy. Upgrade CDK when a patched release is available or obtain a documented tooling-risk decision before production deployment. This dependency is not in the bundled Lambda, but tooling risk must not be silently waived. Do not process untrusted asset glob patterns during synthesis.
 - Add GitHub Actions deployment only after configuring an OIDC trust policy restricted to the repository and protected deployment environment, with least-privilege deployment roles and required production reviewers. Do not place AWS keys in GitHub secrets or grant deployment credentials to PR jobs. No deployment workflow or OIDC roles have been provisioned in this first slice.
