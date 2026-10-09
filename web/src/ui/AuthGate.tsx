@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { LoaderCircle, LogOut } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import type { User } from "oidc-client-ts";
 import { getAuthClient, type AuthClient } from "../auth";
 import { App } from "../App";
+import { AccountMenu } from "./AccountMenu";
 import { createCheckInsApi } from "../checkinsApi";
 import {
   localRepository,
@@ -176,30 +177,13 @@ export function AuthGate() {
       accountHeader={
         <header className="account-bar">
           <span className="account-brand">Energy Me</span>
-          <span
-            className="account-name"
-            title={user.profile.email ?? user.profile.sub}
-          >
-            {user.profile.name || user.profile.email || "Minha conta"}
-          </span>
-          <button
-            className="account-signout"
-            type="button"
-            onClick={signOut}
-            disabled={busy}
-            aria-label="Sair da conta"
-            title="Sair da conta"
-          >
-            {busy ? (
-              <LoaderCircle
-                className="auth-spinner"
-                size={20}
-                aria-hidden="true"
-              />
-            ) : (
-              <LogOut size={20} aria-hidden="true" />
-            )}
-          </button>
+          <AccountMenu
+            name={user.profile.name || user.profile.email || "Minha conta"}
+            email={user.profile.email}
+            remote={Boolean(API_URL && client)}
+            busy={busy}
+            onSignOut={signOut}
+          />
         </header>
       }
     />
