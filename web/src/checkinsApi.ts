@@ -94,6 +94,29 @@ export function createCheckInsApi({ baseUrl, getToken, fetch: doFetch = fetch, s
       return all.sort((a, b) => a.date.localeCompare(b.date))
     },
 
+    /** Link de leitura ativo (sem o código, que só aparece ao ser criado). */
+    async getShare(): Promise<Share | null> {
+      return parseShare(((await request('/share')) as { share?: unknown })?.share)
+    },
+
+    /** Gera um link novo; o anterior para de funcionar na hora. */
+    async createShare(expiresInDays: ShareExpiry): Promise<{ token: string; share: Share }> {
+      const body = (await request('/share', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expiresInDays }),
+      })) as { token?: unknown; share?: unknown }
+      const share = parseShare(body?.share)
+      if (typeof body?.token !== 'string' || !SHARE_TOKEN.test(body.token) || !share) {
+        throw new ApiError(0, 'BAD_RESPONSE')
+      }
+      return { token: body.token, share }
+    },
+
+    async revokeShare(): Promise<void> {
+      await request('/share', { method: 'DELETE' })
+    },
+
     async put(date: DateKey, values: Values): Promise<CheckIn> {
       const saved = await request(`/checkins/${encodeURIComponent(date)}`, {
         method: 'PUT',
@@ -108,3 +131,61 @@ export function createCheckInsApi({ baseUrl, getToken, fetch: doFetch = fetch, s
 }
 
 export type CheckInsApi = ReturnType<typeof createCheckInsApi>
+
+// --- Link de leitura -------------------------------------------------------
+
+export type ShareExpiry = 7 | 30 | null
+
+export interface Share {
+  createdAt: string
+  /** Nulo quando vale até ser desativado. */
+  expiresAt: string | null
+}
+
+const SHARE_TOKEN = /^[A-Za-z0-9_-]{43}$/
+
+function parseShare(raw: unknown): Share | null {
+  if (!raw || typeof raw !== 'object') return null
+  const { createdAt, expiresAt } = raw as { createdAt?: unknown; expiresAt?: unknown }
+  if (typeof createdAt !== 'string') return null
+  return { createdAt, expiresAt: typeof expiresAt === 'string' ? expiresAt : null }
+}
+
+/** O código vai depois do #: o navegador não o envia ao servidor da página. */
+export function shareUrl(origin: string, token: string): string {
+  return `${origin.replace(/\/+$/, '')}/ver#${token}`
+}
+
+export function tokenFromHash(hash: string): string | null {
+  const token = hash.replace(/^#/, '')
+  return SHARE_TOKEN.test(token) ? token : null
+}
+
+/**
+ * O que quem recebeu o link vê. Sem login: a API devolve só datas e
+ * intensidades dos últimos 60 dias. `null` quando o link não vale mais.
+ */
+export async function fetchSharedView(
+  baseUrl: string,
+  token: string,
+  { fetch: doFetch = fetch, signal }: { fetch?: typeof fetch; signal?: AbortSignal } = {},
+): Promise<{ checkins: CheckIn[]; expiresAt: string | null } | null> {
+  let res: Response
+  try {
+    res = await doFetch(`${baseUrl.replace(/\/+$/, '')}/public/share/${encodeURIComponent(token)}`, {
+      signal,
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer',
+    })
+  } catch (err) {
+    if ((err as { name?: string })?.name === 'AbortError') throw err
+    throw new ApiError(0, 'NETWORK')
+  }
+  if (res.status === 404) return null
+  if (!res.ok) throw new ApiError(res.status, 'HTTP_ERROR')
+  const body = (await res.json()) as { items?: unknown; expiresAt?: unknown }
+  return {
+    checkins: toCheckIns(body?.items).sort((a, b) => a.date.localeCompare(b.date)),
+    expiresAt: typeof body?.expiresAt === 'string' ? body.expiresAt : null,
+  }
+}

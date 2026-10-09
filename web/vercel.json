@@ -4,6 +4,10 @@
     {
       "source": "/auth/callback",
       "destination": "/index.html"
+    },
+    {
+      "source": "/ver",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -13,6 +17,23 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/ver",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
         }
       ]
     }

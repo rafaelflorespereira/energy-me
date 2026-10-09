@@ -7,8 +7,9 @@ TypeScript AWS CDK v2 stack for the architecture in [the persistence proposal](.
 - One on-demand DynamoDB table, keyed by `userId` and `date`, with encryption, point-in-time recovery, deletion protection, and retention on stack removal or replacement.
 - One Node.js 22 ARM64 Lambda with bounded timeout, memory, concurrency, and explicit log retention. Its role grants only `Query` and `UpdateItem` on this table.
 - API Gateway HTTP API with `GET /checkins` and `PUT /checkins/{date}`, an existing Cognito JWT issuer/client audience, required `openid` scope, exact-origin CORS, and stage throttling.
+- Read-only share link ([design](../docs/share-link.md)): a second table `energy-me-shares-<stage>` (hash of the link only, TTL for expired links), a second Lambda whose role can only read check-ins, `GET`/`PUT`/`DELETE /share` behind Cognito, and `GET /public/share/{token}` as the one route without login.
 - Access logs contain request ID, route key, status, and latency, not user identities, query strings, authorization headers, request bodies, or feeling values.
-- CloudWatch alarms for Lambda invocation errors and API 5xx responses, sent by email through an SNS topic, plus a monthly account-wide cost budget that emails the same address.
+- CloudWatch alarms for Lambda invocation errors (both functions) and API 5xx responses, sent by email through an SNS topic, plus a monthly account-wide cost budget that emails the same address.
 - Separate `dev` and `prod` stack/table names. Production stack termination protection is enabled by the CDK entry point. Both environments retain and protect their tables.
 
 **The API implements `GET /checkins` and `PUT /checkins/{date}`** per [the persistence contract](../docs/checkin-persistence.md): access token required, owner taken from the verified `sub`, seven English feeling keys with integer intensities 0 to 4, real calendar dates, and a date-only pagination cursor. Handler tests run against a stubbed DynamoDB client. DELETE (clear-all) is not exposed, and the role has no delete permission. The web app uses this API when `VITE_CHECKINS_API_URL` is set and falls back to local storage otherwise.

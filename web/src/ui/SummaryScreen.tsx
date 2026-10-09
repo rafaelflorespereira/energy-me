@@ -11,13 +11,15 @@ import { changeLine, longDate, periodWords, shortDate, verdict, verdictSub } fro
 interface Props {
   checkins: readonly CheckIn[]
   today: DateKey
-  onGoCheckIn: () => void
+  /** Ausente na visão compartilhada, que é só leitura. */
+  onGoCheckIn?: () => void
+  title?: string
   /** Ausentes quando os dados estão na nuvem: exemplo e apagar tudo são só locais. */
   onLoadSample?: () => void
   onClear?: () => void
 }
 
-export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onClear }: Props) {
+export function SummaryScreen({ checkins, today, onGoCheckIn, title = 'Seu resumo', onLoadSample, onClear }: Props) {
   const [period, setPeriod] = useState<PeriodKind>('semana')
   const [picked, setPicked] = useState<FeelingId | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
@@ -32,7 +34,7 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
     <>
       <header className="hd">
         <small>Hoje, {longDate(today)}</small>
-        <h1>Seu resumo</h1>
+        <h1>{title}</h1>
       </header>
 
       <div className="period" role="group" aria-label="Período">
@@ -46,10 +48,16 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
       {checkins.length === 0 ? (
         <section className="card empty">
           <h2>Nenhum registro ainda</h2>
-          <p>Faça o primeiro check-in para ver aqui a análise da semana e do mês.</p>
-          <button className="cta" type="button" onClick={onGoCheckIn}>
-            Fazer check-in
-          </button>
+          {onGoCheckIn ? (
+            <>
+              <p>Faça o primeiro check-in para ver aqui a análise da semana e do mês.</p>
+              <button className="cta" type="button" onClick={onGoCheckIn}>
+                Fazer check-in
+              </button>
+            </>
+          ) : (
+            <p>Ainda não há check-ins nos últimos 60 dias.</p>
+          )}
           {onLoadSample ? (
             <button className="link" type="button" onClick={onLoadSample}>
               Ver com dados de exemplo

@@ -1013,3 +1013,190 @@ svg text {
     animation: none !important;
   }
 }
+
+/* Link de leitura: item do menu, diálogo de quem compartilha e visão de quem recebe */
+.account-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.account-item:hover {
+  background: var(--soft);
+}
+.account-item + .account-signout {
+  margin-top: 0;
+}
+.share-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 18px 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 20px 48px rgb(0 0 0 / 0.2);
+}
+.share-dialog::backdrop {
+  background: rgb(0 0 0 / 0.35);
+}
+.share-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.share-head h2 {
+  margin: 4px 0 0;
+  font: 700 19px/1.25 var(--f-display);
+}
+.share-close {
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: -8px -8px 0 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.share-lead,
+.share-hint,
+.share-state {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.share-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  color: var(--ink);
+}
+.share-link {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--soft);
+}
+.share-link input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--ink);
+  font: 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.share-hint {
+  font-size: 12.5px;
+}
+.share-expiry {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  border: 0;
+}
+.share-expiry legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.share-expiry label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.share-expiry label:has(input:checked) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.share-expiry input {
+  accent-color: var(--accent);
+  margin: 0;
+}
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.share-link .share-actions {
+  margin-top: 10px;
+}
+.share-actions .cta,
+.share-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  width: auto;
+  min-height: 48px;
+  margin: 0;
+}
+.share-secondary {
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.share-secondary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.share-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+.shared-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.shared-note {
+  margin: 0;
+  text-align: center;
+}
