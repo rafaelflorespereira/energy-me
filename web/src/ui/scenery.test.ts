@@ -6,11 +6,19 @@ import {
   intensityTreatment,
   parseSceneryPrefs,
   sceneForToday,
+  sceneForValues,
   sceneMedia,
 } from './scenery'
 
 const TODAY = '2026-10-08'
 const make = (date: string, patch: Partial<Values> = {}): CheckIn => ({ date, values: { ...emptyValues(), ...patch } })
+
+describe('prévia no check-in', () => {
+  it('aplica a mesma regra aos valores ainda não salvos', () => {
+    expect(sceneForValues({ ...emptyValues(), tristeza: 2, preocupacao: 3 })).toEqual({ feeling: 'preocupacao', intensity: 3 })
+    expect(sceneForValues(emptyValues())).toBeNull()
+  })
+})
 
 describe('cenário do resumo', () => {
   it('usa só o check-in de hoje', () => {

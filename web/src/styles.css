@@ -928,10 +928,18 @@ svg text {
 }
 .with-scenery .card,
 .with-scenery .scenery-bar,
-.with-scenery .footer {
+.with-scenery .footer,
+.with-scenery .row {
   background: color-mix(in srgb, var(--card) 88%, transparent);
   -webkit-backdrop-filter: blur(16px) saturate(1.1);
   backdrop-filter: blur(16px) saturate(1.1);
+}
+.with-scenery .row.on {
+  background: color-mix(in srgb, color-mix(in srgb, var(--c) 7%, var(--card)) 90%, transparent);
+}
+.with-scenery .scale,
+.with-scenery .hint {
+  color: var(--ink);
 }
 .with-scenery .analysis {
   background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 90%, transparent);
