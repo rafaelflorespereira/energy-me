@@ -174,9 +174,12 @@ export function AuthGate() {
     <App
       key={user.profile.sub}
       repository={repository}
-      accountHeader={
+      accountHeader={(scenery) => (
         <header className="account-bar">
-          <span className="account-brand">Energy Me</span>
+          <span className="account-brand">
+            <span className="account-brand-name">Energy Me</span>
+          </span>
+          {scenery}
           <AccountMenu
             name={user.profile.name || user.profile.email || "Minha conta"}
             email={user.profile.email}
@@ -185,7 +188,7 @@ export function AuthGate() {
             onSignOut={signOut}
           />
         </header>
-      }
+      )}
     />
   );
 }

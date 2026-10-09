@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Image, ImageOff, Pause, Play } from 'lucide-react'
 import { type CheckIn } from '../domain/checkins'
 import { type DateKey } from '../domain/dates'
 import { FEELINGS, INTENSITY_LABELS, type FeelingId, feelingById } from '../domain/feelings'
@@ -7,16 +6,7 @@ import { PERIOD_DAYS, analyze, series, type PeriodKind } from '../domain/stats'
 import { Bars, Line } from './Charts'
 import { FEELING_COLOR } from './colors'
 import { changeLine, longDate, periodWords, shortDate, verdict, verdictSub } from './copy'
-import { type Scene, type SceneryPrefs } from './scenery'
 
-interface SceneryControls {
-  /** Cena do check-in de hoje; o cenário nunca representa a semana ou o mês. */
-  scene: Scene
-  prefs: SceneryPrefs
-  /** Falso quando o sistema pede menos movimento ou economia de dados. */
-  motion: boolean
-  onChange: (patch: Partial<SceneryPrefs>) => void
-}
 
 interface Props {
   checkins: readonly CheckIn[]
@@ -25,11 +15,9 @@ interface Props {
   /** Ausentes quando os dados estão na nuvem: exemplo e apagar tudo são só locais. */
   onLoadSample?: () => void
   onClear?: () => void
-  /** Ausente quando não há check-in hoje com algum sentimento marcado. */
-  scenery?: SceneryControls
 }
 
-export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onClear, scenery }: Props) {
+export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onClear }: Props) {
   const [period, setPeriod] = useState<PeriodKind>('semana')
   const [picked, setPicked] = useState<FeelingId | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
@@ -54,8 +42,6 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
           </button>
         ))}
       </div>
-
-      {scenery ? <SceneryBar {...scenery} /> : null}
 
       {checkins.length === 0 ? (
         <section className="card empty">
@@ -177,36 +163,3 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
   )
 }
 
-function SceneryBar({ scene, prefs, motion, onChange }: SceneryControls) {
-  const feeling = feelingById(scene.feeling)
-  return (
-    <div className="scenery-bar" role="group" aria-label="Cenário do resumo">
-      <span className="scenery-what">
-        Hoje: <b>{feeling.name}</b>, {INTENSITY_LABELS[scene.intensity]}
-      </span>
-      <div className="scenery-actions">
-        {prefs.enabled && motion ? (
-          <button
-            type="button"
-            className="scenery-btn icon"
-            aria-pressed={prefs.paused}
-            aria-label="Pausar animação"
-            title={prefs.paused ? 'Retomar animação' : 'Pausar animação'}
-            onClick={() => onChange({ paused: !prefs.paused })}
-          >
-            {prefs.paused ? <Play aria-hidden="true" /> : <Pause aria-hidden="true" />}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="scenery-btn"
-          aria-pressed={prefs.enabled}
-          onClick={() => onChange({ enabled: !prefs.enabled })}
-        >
-          {prefs.enabled ? <Image aria-hidden="true" /> : <ImageOff aria-hidden="true" />}
-          Cenário
-        </button>
-      </div>
-    </div>
-  )
-}
