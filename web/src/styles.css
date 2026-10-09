@@ -259,10 +259,10 @@ button:focus-visible {
   inset: 0;
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--surface) 95%, transparent) 0,
-    color-mix(in srgb, var(--surface) 80%, transparent) 110px,
-    color-mix(in srgb, var(--surface) 30%, transparent) 220px,
-    transparent 320px
+    color-mix(in srgb, var(--surface) 75%, transparent) 0,
+    color-mix(in srgb, var(--surface) 50%, transparent) 110px,
+    color-mix(in srgb, var(--surface) 15%, transparent) 220px,
+    transparent 300px
   );
 }
 
@@ -831,17 +831,22 @@ svg text {
 .with-scenery .card,
 .with-scenery .scenery-bar,
 .with-scenery .footer {
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  backdrop-filter: blur(16px) saturate(1.1);
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
 }
 .with-scenery .analysis {
-  background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 90%, transparent);
+  background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 58%, transparent);
 }
 .with-scenery .period {
-  background: color-mix(in srgb, var(--soft) 84%, transparent);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--soft) 55%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.with-scenery .tabbar {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 .with-scenery .footer {
   align-self: center;
