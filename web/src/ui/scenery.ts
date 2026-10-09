@@ -3,7 +3,7 @@
 
 import { type CheckIn } from '../domain/checkins'
 import { type DateKey } from '../domain/dates'
-import { FEELINGS, type FeelingId, type Intensity } from '../domain/feelings'
+import { FEELINGS, type FeelingId, type Intensity, type Values } from '../domain/feelings'
 
 export type SceneIntensity = Exclude<Intensity, 0>
 
@@ -21,10 +21,17 @@ export interface Scene {
  */
 export function sceneForToday(checkins: readonly CheckIn[], today: DateKey): Scene | null {
   const todays = checkins.find((c) => c.date === today)
-  if (!todays) return null
+  return todays ? sceneForValues(todays.values) : null
+}
+
+/**
+ * A mesma regra aplicada a valores soltos: usada no resumo (check-in salvo) e como
+ * prévia na tela de check-in, enquanto a pessoa ainda escolhe as intensidades.
+ */
+export function sceneForValues(values: Values): Scene | null {
   let best: Scene | null = null
   for (const f of FEELINGS) {
-    const v = todays.values[f.id]
+    const v = values[f.id]
     if (v > 0 && (!best || v > best.intensity)) best = { feeling: f.id, intensity: v as SceneIntensity }
   }
   return best

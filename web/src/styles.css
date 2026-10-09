@@ -916,11 +916,11 @@ svg text {
 /* Com cenário: superfícies estáveis e legíveis por cima da imagem.
    O texto secundário fica um pouco mais forte para manter o contraste sobre cenas escuras ou claras. */
 .with-scenery {
-  --muted: #58635d;
+  --muted: #46504a;
 }
 @media (prefers-color-scheme: dark) {
   .with-scenery {
-    --muted: #a6b2ab;
+    --muted: #b8c3bc;
   }
 }
 .with-scenery .hd small {
@@ -928,16 +928,24 @@ svg text {
 }
 .with-scenery .card,
 .with-scenery .scenery-bar,
-.with-scenery .footer {
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  backdrop-filter: blur(16px) saturate(1.1);
+.with-scenery .footer,
+.with-scenery .row {
+  background: color-mix(in srgb, var(--card) 62%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+}
+.with-scenery .row.on {
+  background: color-mix(in srgb, color-mix(in srgb, var(--c) 9%, var(--card)) 68%, transparent);
+}
+.with-scenery .scale,
+.with-scenery .hint {
+  color: var(--ink);
 }
 .with-scenery .analysis {
-  background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 90%, transparent);
+  background: color-mix(in srgb, color-mix(in srgb, var(--accent) 9%, var(--card)) 68%, transparent);
 }
 .with-scenery .period {
-  background: color-mix(in srgb, var(--soft) 84%, transparent);
+  background: color-mix(in srgb, var(--soft) 62%, transparent);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }

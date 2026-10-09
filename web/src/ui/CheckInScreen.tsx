@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { hasAnyFeeling } from '../domain/checkins'
 import { FEELINGS, INTENSITY_LABELS, emptyValues, type FeelingId, type Intensity, type Values } from '../domain/feelings'
 import { type DateKey } from '../domain/dates'
@@ -13,10 +13,13 @@ interface Props {
   onSave: (values: Values) => void
   saving?: boolean
   saveError?: boolean
+  /** Avisa a cada mudança, para o cenário mostrar uma prévia do que está sendo marcado. */
+  onValuesChange?: (values: Values) => void
 }
 
-export function CheckInScreen({ today, existing, onSave, saving = false, saveError = false }: Props) {
+export function CheckInScreen({ today, existing, onSave, saving = false, saveError = false, onValuesChange }: Props) {
   const [values, setValues] = useState<Values>(() => existing ?? emptyValues())
+  useEffect(() => onValuesChange?.(values), [values, onValuesChange])
   const marked = FEELINGS.filter((f) => values[f.id] > 0).length
 
   const set = (id: FeelingId, v: Intensity) => setValues((cur) => ({ ...cur, [id]: v }))

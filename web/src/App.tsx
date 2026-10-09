@@ -6,7 +6,7 @@ import { sampleCheckIns } from "./domain/sample";
 import { type CheckInRepository } from "./repository";
 import { CheckInScreen } from "./ui/CheckInScreen";
 import { Scenery, useSceneryMotion, useSceneryPrefs } from "./ui/Scenery";
-import { sceneForToday } from "./ui/scenery";
+import { sceneForToday, sceneForValues } from "./ui/scenery";
 import { SummaryScreen } from "./ui/SummaryScreen";
 
 type Tab = "checkin" | "resumo";
@@ -92,10 +92,19 @@ export function App({
 
   const todays = checkins.find((c) => c.date === today)?.values ?? null;
   const scene = useMemo(() => sceneForToday(checkins, today), [checkins, today]);
+  // No check-in, o cenário é uma prévia do que está marcado agora, com a mesma regra.
+  const [draft, setDraft] = useState<Values | null>(null);
+  const draftScene = useMemo(() => (draft ? sceneForValues(draft) : null), [draft]);
+  const shownScene = tab === "resumo" ? scene : draftScene;
   const [sceneryPrefs, setSceneryPrefs] = useSceneryPrefs();
   const sceneryMotion = useSceneryMotion();
   const showScenery =
-    tab === "resumo" && status === "ready" && sceneryPrefs.enabled && scene !== null;
+    status === "ready" && sceneryPrefs.enabled && shownScene !== null;
+  // Guarda a última cena para o fade de saída ter o que mostrar.
+  const [lastScene, setLastScene] = useState(shownScene);
+  useEffect(() => {
+    if (shownScene) setLastScene(shownScene);
+  }, [shownScene]);
   // Mantém o cenário montado por um instante ao sair, para ele sumir com fade.
   const [sceneryMounted, setSceneryMounted] = useState(showScenery);
   useEffect(() => {
@@ -134,9 +143,9 @@ export function App({
     <div className="app">
       {accountHeader}
       <div className="stage">
-        {sceneryMounted && scene ? (
+        {sceneryMounted && lastScene ? (
           <Scenery
-            scene={scene}
+            scene={shownScene ?? lastScene}
             visible={showScenery}
             motion={sceneryMotion}
             paused={sceneryPrefs.paused}
@@ -167,6 +176,7 @@ export function App({
               onSave={save}
               saving={saving}
               saveError={saveError}
+              onValuesChange={setDraft}
             />
           ) : (
             <SummaryScreen
