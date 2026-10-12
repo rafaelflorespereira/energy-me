@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { type CheckIn } from '../domain/checkins'
 import { type DateKey } from '../domain/dates'
 import { FEELINGS, INTENSITY_LABELS, type FeelingId, feelingById } from '../domain/feelings'
+import { phraseOfTheDay } from '../domain/phrases'
 import { PERIOD_DAYS, analyze, series, type PeriodKind } from '../domain/stats'
 import { Bars, Line } from './Charts'
 import { FEELING_COLOR } from './colors'
+import { sceneForToday } from './scenery'
 import { changeLine, longDate, periodWords, shortDate, verdict, verdictSub } from './copy'
 
 
@@ -27,6 +29,8 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
   const selected = feelingById(picked ?? a.top.id)
   const topColor = FEELING_COLOR[a.top.id]
   const joy = INTENSITY_LABELS[Math.round(a.current.avg.alegria)]
+  // Mesmo sentimento do cenário: o mais intenso de hoje, empate fica com o primeiro da lista.
+  const todayScene = sceneForToday(checkins, today)
 
   return (
     <>
@@ -42,6 +46,8 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
           </button>
         ))}
       </div>
+
+      {todayScene ? <PhraseCard feeling={todayScene.feeling} today={today} /> : null}
 
       {checkins.length === 0 ? (
         <section className="card empty">
@@ -163,3 +169,17 @@ export function SummaryScreen({ checkins, today, onGoCheckIn, onLoadSample, onCl
   )
 }
 
+
+function PhraseCard({ feeling, today }: { feeling: FeelingId; today: DateKey }) {
+  const f = feelingById(feeling)
+  return (
+    <section className="card phrase" style={{ ['--c' as string]: FEELING_COLOR[feeling] }}>
+      <h2>Frase do dia</h2>
+      <p className="phrase-text">{phraseOfTheDay(feeling, today)}</p>
+      <p className="phrase-for">
+        <i className="dot" />
+        Mais forte hoje: {f.name}
+      </p>
+    </section>
+  )
+}
